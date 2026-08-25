@@ -2,6 +2,7 @@ let serialPort = null;
 let serialWriter = null;
 let currentPreset = 0;
 let presetData = [];
+let retryRequestTimeout = null;
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
@@ -59,7 +60,7 @@ async function connectSerial(port) {
   try {
     if (!port) port = await navigator.serial.requestPort();
     serialPort = port;
-    await serialPort.open({ baudRate: 115200 });
+    await serialPort.open({ baudRate: 115200, bufferSize: 4096 });
     serialWriter = serialPort.writable.getWriter();
     stateEl.textContent = "Connected (Serial)";
     stateEl.style.color = "#4caf50";
@@ -67,7 +68,14 @@ async function connectSerial(port) {
     document.getElementById("midi-connected-options").classList.remove("hidden");
     document.getElementById("midi-connect").classList.add("hidden");
     readSerialLoop();
+    await new Promise((r) => setTimeout(r, 500));
     requestPreset(currentPreset);
+    retryRequestTimeout = setTimeout(() => {
+      if (presetData[currentPreset].encoders[0].number === 0 &&
+          presetData[currentPreset].encoders[0].name === "") {
+        requestPreset(currentPreset);
+      }
+    }, 2000);
   } catch (e) {
     stateEl.textContent = "Serial error: " + e.message;
     stateEl.style.color = "#f44";
@@ -128,6 +136,7 @@ function requestPreset(preset) {
 function onMessage(d) {
   if (d[0] !== 0xf0 || d[1] !== 0x6f) return;
   const status = d[2];
+  console.log("SysEx received:", Array.from(d).map(b => b.toString(16)).join(" "));
 
   if (status === 0x0e) {
     const layout = d[3];
