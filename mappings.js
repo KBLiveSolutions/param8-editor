@@ -1,13 +1,20 @@
 let mappingsData = {};
 let defaultsData = {};
 
+const STORAGE_KEY = "param8-mappings";
+
 async function loadMappings() {
-  const [mappingsRes, defaultsRes] = await Promise.all([
-    fetch("/api/mappings"),
-    fetch("/api/defaults"),
-  ]);
-  mappingsData = await mappingsRes.json();
-  defaultsData = await defaultsRes.json();
+  const res = await fetch("defaults.json");
+  defaultsData = await res.json();
+
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      mappingsData = JSON.parse(stored);
+    } catch (e) {
+      mappingsData = {};
+    }
+  }
 }
 
 async function saveMappings() {
@@ -22,21 +29,41 @@ async function saveMappings() {
       toSave[key] = val;
     }
   }
-  const res = await fetch("/api/mappings", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(toSave),
-  });
-  const result = await res.json();
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
   const status = document.getElementById("save-status");
-  if (result.ok) {
-    status.textContent = "Saved!";
-    status.style.color = "#4caf50";
-    setTimeout(() => (status.textContent = ""), 4000);
-  } else {
-    status.textContent = "Error: " + (result.error || "unknown");
-    status.style.color = "#f44";
-  }
+  status.textContent = "Saved!";
+  status.style.color = "#4caf50";
+  setTimeout(() => (status.textContent = ""), 4000);
+}
+
+function exportMappings() {
+  const data = localStorage.getItem(STORAGE_KEY) || "{}";
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "param8-mappings.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importMappings(file) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      mappingsData = data;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      renderDeviceList();
+      const status = document.getElementById("save-status");
+      status.textContent = "Imported!";
+      status.style.color = "#4caf50";
+      setTimeout(() => (status.textContent = ""), 4000);
+    } catch (err) {
+      console.error("Invalid mappings file", err);
+    }
+  };
+  reader.readAsText(file);
 }
 
 function getEffectiveBanks(deviceName) {

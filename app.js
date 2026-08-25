@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  document.getElementById("midi-connect").addEventListener("click", connectSerial);
+  document.getElementById("midi-connect").addEventListener("click", () => connectSerial());
 
   document.querySelectorAll(".layout-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -47,6 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   initControllerUI();
+  autoConnect();
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js");

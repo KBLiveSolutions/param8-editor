@@ -54,21 +54,31 @@ for (let p = 0; p < 6; p++) {
   }
 }
 
-async function connectSerial() {
+async function connectSerial(port) {
   const stateEl = document.getElementById("midi-state");
   try {
-    serialPort = await navigator.serial.requestPort();
+    if (!port) port = await navigator.serial.requestPort();
+    serialPort = port;
     await serialPort.open({ baudRate: 115200 });
     serialWriter = serialPort.writable.getWriter();
     stateEl.textContent = "Connected (Serial)";
     stateEl.style.color = "#4caf50";
     document.getElementById("controller-config").classList.remove("hidden");
     document.getElementById("midi-connected-options").classList.remove("hidden");
+    document.getElementById("midi-connect").classList.add("hidden");
     readSerialLoop();
     requestPreset(currentPreset);
   } catch (e) {
     stateEl.textContent = "Serial error: " + e.message;
     stateEl.style.color = "#f44";
+  }
+}
+
+async function autoConnect() {
+  if (!("serial" in navigator)) return;
+  const ports = await navigator.serial.getPorts();
+  if (ports.length > 0) {
+    connectSerial(ports[0]);
   }
 }
 
@@ -95,11 +105,14 @@ async function readSerialLoop() {
     }
   } catch (e) {
     console.error("Serial read error", e);
+    serialPort = null;
+    serialWriter = null;
     const stateEl = document.getElementById("midi-state");
     stateEl.textContent = "Disconnected";
     stateEl.style.color = "#f44";
     document.getElementById("controller-config").classList.add("hidden");
     document.getElementById("midi-connected-options").classList.add("hidden");
+    document.getElementById("midi-connect").classList.remove("hidden");
   }
 }
 
