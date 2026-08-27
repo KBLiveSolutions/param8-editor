@@ -562,6 +562,12 @@ button.danger:hover { background: #7a2a2a; }
   height: var(--ctrl-height);
 }
 
+.ctrl-card hr.ctrl-separator {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 10px 0;
+}
+
 .toggle-label {
   position: absolute;
   right: 12px;

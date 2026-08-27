@@ -211,8 +211,8 @@ function renderControls() {
 
     const card = document.createElement("div");
     card.className = "ctrl-card";
-    card.innerHTML = `
-      <div class="ctrl-number">${i + 1}</div>
+
+    const buttonBlock = `
       <div class="ctrl-row">
         <span class="ctrl-label">Button</span>
         <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
@@ -233,8 +233,9 @@ function renderControls() {
                  data-ctrl="btn" data-idx="${i}" data-field="toggle">
           Toggle
         </label>
-      </div>
-      <hr>
+      </div>`;
+
+    const encoderBlock = `
       <div class="ctrl-row">
         <span class="ctrl-label">Encoder</span>
         <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
@@ -245,7 +246,14 @@ function renderControls() {
         ${numInputHtml("enc", i, enc.number)}
         <span class="ctrl-ch-label">Ch</span>
         ${channelSelectHtml("enc", i, enc.channel)}
-      </div>
+      </div>`;
+
+    const isBottomRow = i >= 4;
+    card.innerHTML = `
+      <div class="ctrl-number">${i + 1}</div>
+      ${isBottomRow ? encoderBlock : buttonBlock}
+      <hr class="ctrl-separator">
+      ${isBottomRow ? buttonBlock : encoderBlock}
     `;
     grid.appendChild(card);
   }
