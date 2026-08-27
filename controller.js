@@ -250,10 +250,11 @@ function renderControls() {
 
     const isBottomRow = i >= 4;
     card.innerHTML = `
-      <div class="ctrl-number">${i + 1}</div>
+      ${!isBottomRow ? `<div class="ctrl-number">${i + 1}</div>` : ''}
       ${isBottomRow ? encoderBlock : buttonBlock}
       <hr class="ctrl-separator">
       ${isBottomRow ? buttonBlock : encoderBlock}
+      ${isBottomRow ? `<div class="ctrl-number">${i + 1}</div>` : ''}
     `;
     grid.appendChild(card);
   }
