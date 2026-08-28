@@ -48,7 +48,7 @@ function noteSelectHtml(midi, idx) {
 }
 
 for (let p = 0; p < 6; p++) {
-  presetData[p] = { encoders: [], buttons: [] };
+  presetData[p] = { encoders: [], buttons: [], presetName: "" };
   for (let i = 0; i < 8; i++) {
     presetData[p].encoders[i] = { type: 0, number: 0, channel: 0, name: "" };
     presetData[p].buttons[i] = { type: 0, number: 0, channel: 0, toggle: false, name: "" };
@@ -153,6 +153,21 @@ function onMessage(d) {
     return;
   }
 
+  if (status === 0x11) {
+    const preset = d[3];
+    if (preset >= 6) return;
+    let name = "";
+    for (let j = 4; j < d.length - 1; j++) {
+      name += String.fromCharCode(d[j]);
+    }
+    presetData[preset].presetName = name;
+    if (preset === currentPreset) {
+      const input = document.getElementById("preset-name-input");
+      if (input) input.value = name;
+    }
+    return;
+  }
+
   const preset = d[3];
   const idx = d[4];
   if (preset >= 6 || idx >= 8) return;
@@ -198,6 +213,7 @@ function sendFullPreset(preset) {
     if (pd.encoders[i].name) sendControlName(preset, i, 0, pd.encoders[i].name);
     if (pd.buttons[i].name) sendControlName(preset, i, 1, pd.buttons[i].name);
   }
+  if (pd.presetName) sendPresetName(preset, pd.presetName);
 }
 
 function renderControls() {
@@ -326,6 +342,15 @@ function sendButton(preset, idx) {
   serialSend([0xf0, 0x6f, 0x0c, preset, idx, btn.type, btn.number, btn.channel, btn.toggle ? 1 : 0, 0xf7]);
 }
 
+function sendPresetName(preset, name) {
+  const bytes = [0xf0, 0x6f, 0x11, preset];
+  for (let i = 0; i < name.length && i < 19; i++) {
+    bytes.push(name.charCodeAt(i));
+  }
+  bytes.push(0xf7);
+  serialSend(bytes);
+}
+
 function sendControlName(preset, idx, isButton, name) {
   const bytes = [0xf0, 0x6f, 0x0f, preset, idx, isButton];
   for (let i = 0; i < name.length && i < 11; i++) {
@@ -337,7 +362,7 @@ function sendControlName(preset, idx, isButton, name) {
 
 async function savePresetToFile() {
   const pd = presetData[currentPreset];
-  const data = { preset: currentPreset + 1, encoders: pd.encoders, buttons: pd.buttons };
+  const data = { preset: currentPreset + 1, presetName: pd.presetName, encoders: pd.encoders, buttons: pd.buttons };
   const json = JSON.stringify(data, null, 2);
   try {
     const handle = await window.showSaveFilePicker({
@@ -362,6 +387,10 @@ function loadPresetFromFile(file) {
         if (data.encoders[i]) presetData[currentPreset].encoders[i] = data.encoders[i];
         if (data.buttons[i]) presetData[currentPreset].buttons[i] = data.buttons[i];
       }
+      if (data.presetName !== undefined) {
+        presetData[currentPreset].presetName = data.presetName;
+        document.getElementById("preset-name-input").value = data.presetName || "";
+      }
       sendFullPreset(currentPreset);
       renderControls();
     } catch (err) {
@@ -377,8 +406,16 @@ function initControllerUI() {
       currentPreset = parseInt(btn.dataset.preset);
       document.querySelectorAll(".preset-tab").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
+      const nameInput = document.getElementById("preset-name-input");
+      nameInput.value = presetData[currentPreset].presetName || "";
       requestPreset(currentPreset);
     });
+  });
+
+  const presetNameInput = document.getElementById("preset-name-input");
+  presetNameInput.addEventListener("change", () => {
+    presetData[currentPreset].presetName = presetNameInput.value;
+    sendPresetName(currentPreset, presetNameInput.value);
   });
 
   document.getElementById("ctrl-save").addEventListener("click", savePresetToFile);

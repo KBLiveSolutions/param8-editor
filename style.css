@@ -362,6 +362,19 @@ button.danger:hover { background: #7a2a2a; }
   border-bottom-color: var(--accent);
 }
 
+.preset-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 16px;
+}
+
+#preset-name-input {
+  width: 140px;
+  height: var(--ctrl-height);
+  font-size: 12px;
+}
+
 .ctrl-toolbar {
   display: flex; gap: 8px;
 }
