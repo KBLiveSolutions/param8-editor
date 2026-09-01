@@ -505,6 +505,7 @@ button.danger:hover { background: #300; }
   width: 100%;
   margin-bottom: 4px;
   text-align: center;
+  background: #222;
 }
 
 .ctrl-fields {
