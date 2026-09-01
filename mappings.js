@@ -1,18 +1,41 @@
 let mappingsData = {};
 let defaultsData = {};
+let useServer = false;
 
 const STORAGE_KEY = "param8-mappings";
 
 async function loadMappings() {
-  const res = await fetch("defaults.json");
-  defaultsData = await res.json();
+  try {
+    const res = await fetch("/api/defaults");
+    if (res.ok) {
+      defaultsData = await res.json();
+      useServer = true;
+    } else {
+      throw new Error("no server");
+    }
+  } catch (e) {
+    const res = await fetch("defaults.json");
+    defaultsData = await res.json();
+    useServer = false;
+  }
 
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
+  if (useServer) {
     try {
-      mappingsData = JSON.parse(stored);
+      const res = await fetch("/api/mappings");
+      if (res.ok) {
+        mappingsData = await res.json();
+      }
     } catch (e) {
       mappingsData = {};
+    }
+  } else {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        mappingsData = JSON.parse(stored);
+      } catch (e) {
+        mappingsData = {};
+      }
     }
   }
 }
@@ -29,15 +52,35 @@ async function saveMappings() {
       toSave[key] = val;
     }
   }
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+
   const status = document.getElementById("save-status");
-  status.textContent = "Saved!";
-  status.style.color = "#4caf50";
+
+  if (useServer) {
+    try {
+      const res = await fetch("/api/mappings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(toSave),
+      });
+      if (!res.ok) throw new Error("save failed");
+      status.textContent = "Saved to Remote Script";
+      status.style.color = "#4caf50";
+    } catch (e) {
+      status.textContent = "Save failed!";
+      status.style.color = "#f44";
+    }
+  } else {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    status.textContent = "Saved (local only)";
+    status.style.color = "#888";
+  }
   setTimeout(() => (status.textContent = ""), 4000);
 }
 
 function exportMappings() {
-  const data = localStorage.getItem(STORAGE_KEY) || "{}";
+  const data = useServer
+    ? JSON.stringify(mappingsData)
+    : localStorage.getItem(STORAGE_KEY) || "{}";
   const blob = new Blob([data], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -53,7 +96,9 @@ function importMappings(file) {
     try {
       const data = JSON.parse(e.target.result);
       mappingsData = data;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      if (!useServer) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
       renderDeviceList();
       const status = document.getElementById("save-status");
       status.textContent = "Imported!";

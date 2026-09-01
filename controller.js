@@ -408,6 +408,7 @@ function initControllerUI() {
       btn.classList.add("active");
       const nameInput = document.getElementById("preset-name-input");
       nameInput.value = presetData[currentPreset].presetName || "";
+      nameInput.placeholder = "Preset " + (currentPreset + 1);
       requestPreset(currentPreset);
     });
   });
