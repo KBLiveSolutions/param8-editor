@@ -228,49 +228,50 @@ function renderControls() {
     const card = document.createElement("div");
     card.className = "ctrl-card";
 
-    const btnIcon = `<svg class="ctrl-icon" viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>`;
-    const encIcon = `<svg class="ctrl-icon" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" fill="none"/><line x1="8" y1="8" x2="8" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+    const btnIcon = `<svg class="ctrl-icon" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="10" cy="10" r="2.5" fill="currentColor"/></svg>`;
+    const encIcon = `<svg class="ctrl-icon" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" fill="none"/><line x1="10" y1="10" x2="10" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
 
     const buttonBlock = `
-      <div class="ctrl-row">
-        <span class="ctrl-label">${btnIcon}</span>
-        <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
-               data-ctrl="btn" data-idx="${i}" data-field="name" class="ctrl-name">
-      </div>
-      <div class="ctrl-row">
-        <select data-ctrl="btn" data-idx="${i}" data-field="type" class="ctrl-type">
-          <option value="0" ${btn.type === 0 ? "selected" : ""}>CC</option>
-          <option value="1" ${btn.type === 1 ? "selected" : ""}>Note</option>
-        </select>
-        ${btn.type === 1
-          ? noteSelectHtml(btn.number, i)
-          : numInputHtml("btn", i, btn.number)}
-        <span class="ctrl-ch-label">Ch</span>
-        ${channelSelectHtml("btn", i, btn.channel)}
-        <label class="toggle-label ${btn.type === 0 ? '' : 'hidden'}" data-toggle-for="${i}">
-          <input type="checkbox" ${btn.toggle ? "checked" : ""}
-                 data-ctrl="btn" data-idx="${i}" data-field="toggle">
-          Toggle
-        </label>
+      <div class="ctrl-block">
+        <div class="ctrl-block-header">
+          ${btnIcon}
+          <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
+                 data-ctrl="btn" data-idx="${i}" data-field="name" class="ctrl-name">
+        </div>
+        <div class="ctrl-fields">
+          <select data-ctrl="btn" data-idx="${i}" data-field="type" class="ctrl-type">
+            <option value="0" ${btn.type === 0 ? "selected" : ""}>CC</option>
+            <option value="1" ${btn.type === 1 ? "selected" : ""}>Note</option>
+          </select>
+          ${btn.type === 1
+            ? noteSelectHtml(btn.number, i)
+            : numInputHtml("btn", i, btn.number)}
+          ${channelSelectHtml("btn", i, btn.channel)}
+          <label class="toggle-label ${btn.type === 0 ? '' : 'hidden'}" data-toggle-for="${i}">
+            <input type="checkbox" ${btn.toggle ? "checked" : ""}
+                   data-ctrl="btn" data-idx="${i}" data-field="toggle">
+            Tgl
+          </label>
+        </div>
       </div>`;
 
     const encoderBlock = `
-      <div class="ctrl-row">
-        <span class="ctrl-label">${encIcon}</span>
-        <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
-               data-ctrl="enc" data-idx="${i}" data-field="name" class="ctrl-name">
-      </div>
-      <div class="ctrl-row">
-        <span class="ctrl-type-fixed">CC</span>
-        ${numInputHtml("enc", i, enc.number)}
-        <span class="ctrl-ch-label">Ch</span>
-        ${channelSelectHtml("enc", i, enc.channel)}
+      <div class="ctrl-block">
+        <div class="ctrl-block-header">
+          ${encIcon}
+          <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
+                 data-ctrl="enc" data-idx="${i}" data-field="name" class="ctrl-name">
+        </div>
+        <div class="ctrl-fields">
+          <span class="ctrl-type-fixed">CC</span>
+          ${numInputHtml("enc", i, enc.number)}
+          ${channelSelectHtml("enc", i, enc.channel)}
+        </div>
       </div>`;
 
     card.innerHTML = `
       <div class="ctrl-number">${i + 1}</div>
       ${buttonBlock}
-      <hr class="ctrl-separator">
       ${encoderBlock}
     `;
     grid.appendChild(card);

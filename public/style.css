@@ -35,7 +35,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-family: 'Barlow Condensed', 'DIN Condensed', 'DIN Alternate', 'Arial Narrow', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -51,7 +51,7 @@ header {
 }
 
 header h1 {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: 2px;
   color: #fff;
@@ -67,8 +67,8 @@ nav { display: flex; gap: 0; }
   border-bottom: 2px solid transparent;
   color: #666;
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 600;
   font-family: inherit;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -92,8 +92,8 @@ main { padding: 0; max-width: none; margin: 0; }
 }
 
 .device-sidebar {
-  width: 220px;
-  min-width: 220px;
+  width: 240px;
+  min-width: 240px;
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border);
   display: flex;
@@ -109,8 +109,8 @@ main { padding: 0; max-width: none; margin: 0; }
 .cat-tab {
   flex: 1;
   padding: 10px 4px;
-  font-size: 9px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
   border: none;
@@ -141,7 +141,7 @@ main { padding: 0; max-width: none; margin: 0; }
   color: var(--text-input);
   padding: 6px 10px;
   border-radius: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-family: inherit;
 }
 .device-list-search input:focus {
@@ -159,7 +159,7 @@ main { padding: 0; max-width: none; margin: 0; }
 #device-list li {
   padding: 7px 14px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 14px;
   color: #666;
   border-left: 2px solid transparent;
   font-family: inherit;
@@ -195,7 +195,7 @@ select, input[type="text"] {
   color: var(--text-input);
   padding: 6px 10px;
   border-radius: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-family: inherit;
 }
 
@@ -211,8 +211,8 @@ button {
   background: var(--bg-button);
   color: #999;
   cursor: pointer;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   font-family: inherit;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -237,7 +237,7 @@ button.danger:hover { background: #300; }
   border-bottom: 1px solid var(--border);
 }
 .device-header h2 {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   flex: 1;
   color: #fff;
@@ -248,7 +248,7 @@ button.danger:hover { background: #300; }
   color: #333;
   padding: 80px 20px;
   text-align: center;
-  font-size: 13px;
+  font-size: 15px;
   font-family: inherit;
 }
 
@@ -264,7 +264,7 @@ button.danger:hover { background: #300; }
   margin-bottom: 10px;
 }
 .bank-name-input {
-  font-size: 11px; font-weight: 700;
+  font-size: 13px; font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
   background: transparent; border: none; border-bottom: 1px solid transparent;
@@ -286,7 +286,7 @@ button.danger:hover { background: #300; }
 }
 .param-slot input {
   width: 100%;
-  font-size: 11px;
+  font-size: 13px;
   padding: 8px 10px;
   background: #000;
   border: 1px solid var(--border-input);
@@ -298,10 +298,10 @@ button.danger:hover { background: #300; }
 .param-slot input:focus { border-color: #fff; outline: none; background: #0a0a0a; }
 .param-slot input:hover { border-color: var(--border-hover); }
 .param-slot label {
-  font-size: 9px; color: #444;
+  font-size: 10px; color: #444;
   position: absolute; top: -5px; left: 8px;
   background: var(--bg-surface); padding: 0 4px;
-  font-weight: 700;
+  font-weight: 600;
   font-family: inherit;
 }
 
@@ -317,7 +317,7 @@ button.danger:hover { background: #300; }
 }
 
 #save-status {
-  font-size: 11px; color: #888; margin-left: 8px;
+  font-size: 13px; color: #888; margin-left: 8px;
 }
 
 #midi-status {
@@ -328,7 +328,7 @@ button.danger:hover { background: #300; }
   border: 1px solid var(--border);
   border-radius: 0;
 }
-#midi-state { font-size: 12px; font-family: inherit; }
+#midi-state { font-size: 14px; font-family: inherit; }
 #midi-connected-options {
   display: flex; gap: 8px; align-items: center;
   margin-left: auto;
@@ -341,7 +341,7 @@ button.danger:hover { background: #300; }
   padding: 14px 16px;
   margin: 0 24px 12px;
 }
-.config-section h3 { font-size: 12px; margin-bottom: 8px; color: #666; font-family: inherit; }
+.config-section h3 { font-size: 14px; margin-bottom: 8px; color: #666; font-family: inherit; }
 
 /* Controller Editor */
 .ctrl-layout {
@@ -362,7 +362,7 @@ button.danger:hover { background: #300; }
 
 .preset-tab {
   padding: 8px 16px;
-  font-size: 11px; font-weight: 700;
+  font-size: 14px; font-weight: 600;
   border: none;
   border-bottom: 2px solid transparent;
   border-radius: 0;
@@ -383,14 +383,27 @@ button.danger:hover { background: #300; }
 .preset-name-wrap {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin-bottom: 12px;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ctrl-ch-label {
+  font-size: 12px;
+  color: #777;
+  font-family: inherit;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 #preset-name-input {
   width: 200px;
   height: var(--ctrl-height);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .ctrl-toolbar {
@@ -403,9 +416,9 @@ button.danger:hover { background: #300; }
 }
 
 .ctrl-section-title {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-faint);
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
   font-family: inherit;
@@ -418,14 +431,14 @@ button.danger:hover { background: #300; }
 
 .layout-tab {
   padding: 6px 14px;
-  font-size: 11px;
+  font-size: 13px;
   border: 1px solid var(--border-input);
   border-radius: 0;
   background: #000;
   color: #777;
   cursor: pointer;
   font-family: inherit;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   transition: all 0.1s;
@@ -440,64 +453,73 @@ button.danger:hover { background: #300; }
 .controls-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: 6px;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .ctrl-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 0;
-  padding: 12px;
+  padding: 0;
   position: relative;
 }
 
 .ctrl-number {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  color: #fff;
+  color: #888;
   text-align: center;
-  margin-bottom: 8px;
+  padding: 5px 0 2px;
   font-family: inherit;
 }
 
-.ctrl-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  margin-bottom: 6px;
+.ctrl-block {
+  padding: 4px 8px 6px;
 }
 
-.ctrl-label {
-  width: 20px;
-  flex-shrink: 0;
+.ctrl-block + .ctrl-block {
+  border-top: 1px solid var(--border);
+}
+
+.ctrl-block-header {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.ctrl-fields {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
 }
 
 .ctrl-icon {
   width: 16px;
   height: 16px;
-  color: #888;
+  color: #999;
+  flex-shrink: 0;
 }
 
 .ctrl-type {
   background: #000;
   border: 1px solid var(--border-input);
-  color: var(--text-input);
-  padding: 0 4px;
+  color: #ccc;
+  padding: 0 2px;
   border-radius: 0;
-  font-size: 11px;
+  font-size: 14px;
   font-family: inherit;
-  width: 52px;
+  width: 50px;
   height: var(--ctrl-height);
 }
 
 .ctrl-type-fixed {
-  font-size: 11px;
-  color: var(--text-dim);
-  width: 52px;
+  font-size: 14px;
+  color: #aaa;
+  width: 28px;
   flex-shrink: 0;
   text-align: center;
   font-family: inherit;
@@ -509,9 +531,9 @@ button.danger:hover { background: #300; }
   color: var(--text-input);
   padding: 0 6px;
   border-radius: 0;
-  font-size: 11px;
+  font-size: 14px;
   font-family: inherit;
-  width: 80px;
+  width: 100px;
   height: var(--ctrl-height);
 }
 .ctrl-name::placeholder {
@@ -532,9 +554,9 @@ button.danger:hover { background: #300; }
   border: none;
   color: var(--text-input);
   padding: 0 4px;
-  font-size: 11px;
+  font-size: 14px;
   font-family: inherit;
-  width: 34px;
+  width: 36px;
   text-align: center;
   -moz-appearance: textfield;
 }
@@ -575,9 +597,9 @@ button.danger:hover { background: #300; }
   color: var(--text-input);
   padding: 0 4px;
   border-radius: 0;
-  font-size: 11px;
+  font-size: 14px;
   font-family: inherit;
-  width: 46px;
+  width: 50px;
   height: var(--ctrl-height);
 }
 
@@ -587,19 +609,10 @@ button.danger:hover { background: #300; }
   color: var(--text-input);
   padding: 0 4px;
   border-radius: 0;
-  font-size: 11px;
+  font-size: 14px;
   font-family: inherit;
-  width: 38px;
+  width: 42px;
   height: var(--ctrl-height);
-}
-
-.ctrl-ch-label {
-  font-size: 9px;
-  color: #777;
-  font-family: inherit;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .ctrl-ch {
@@ -608,32 +621,21 @@ button.danger:hover { background: #300; }
   color: var(--text-input);
   padding: 0 4px;
   border-radius: 0;
-  font-size: 11px;
+  font-size: 14px;
   font-family: inherit;
-  width: 40px;
+  width: 42px;
   height: var(--ctrl-height);
 }
 
-.ctrl-card hr.ctrl-separator {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: 10px 0;
-}
-
 .toggle-label {
-  position: absolute;
-  right: 12px;
-  font-size: 10px;
-  color: #777;
+  font-size: 13px;
+  color: #888;
   display: flex;
   align-items: center;
-  gap: 3px;
-  margin-left: auto;
+  gap: 2px;
   cursor: pointer;
   white-space: nowrap;
   font-family: inherit;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .toggle-label input[type="checkbox"] {
@@ -652,7 +654,7 @@ button.danger:hover { background: #300; }
   min-width: 300px; max-width: 400px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.8);
 }
-#modal h3 { margin-bottom: 12px; color: #fff; font-family: inherit; }
-#modal-body { margin-bottom: 16px; }
+#modal h3 { margin-bottom: 12px; color: #fff; font-family: inherit; font-size: 16px; }
+#modal-body { margin-bottom: 16px; font-size: 14px; }
 #modal-body input { width: 100%; margin-top: 8px; }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
