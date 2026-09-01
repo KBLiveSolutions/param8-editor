@@ -476,7 +476,7 @@ button.danger:hover { background: #300; }
 
 .ctrl-separator {
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid #fff;
   margin: 0;
 }
 
@@ -496,9 +496,8 @@ button.danger:hover { background: #300; }
 }
 
 .ctrl-section-push {
-  border: 1px solid var(--border);
+  border: 1px solid #fff;
   margin: 6px 6px 8px;
-  background: rgba(255,255,255,0.03);
 }
 
 .ctrl-section .ctrl-name {
