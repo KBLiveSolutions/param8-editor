@@ -469,14 +469,17 @@ button.danger:hover { background: #300; }
 }
 
 .ctrl-label {
-  font-size: 9px;
-  font-weight: 700;
-  color: #fff;
-  width: 52px;
+  width: 20px;
   flex-shrink: 0;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ctrl-icon {
+  width: 16px;
+  height: 16px;
+  color: #888;
 }
 
 .ctrl-type {

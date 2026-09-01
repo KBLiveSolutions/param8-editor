@@ -228,9 +228,12 @@ function renderControls() {
     const card = document.createElement("div");
     card.className = "ctrl-card";
 
+    const btnIcon = `<svg class="ctrl-icon" viewBox="0 0 16 16"><rect x="2" y="4" width="12" height="8" rx="2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>`;
+    const encIcon = `<svg class="ctrl-icon" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" fill="none"/><line x1="8" y1="8" x2="8" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+
     const buttonBlock = `
       <div class="ctrl-row">
-        <span class="ctrl-label">Button</span>
+        <span class="ctrl-label">${btnIcon}</span>
         <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
                data-ctrl="btn" data-idx="${i}" data-field="name" class="ctrl-name">
       </div>
@@ -253,7 +256,7 @@ function renderControls() {
 
     const encoderBlock = `
       <div class="ctrl-row">
-        <span class="ctrl-label">Encoder</span>
+        <span class="ctrl-label">${encIcon}</span>
         <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
                data-ctrl="enc" data-idx="${i}" data-field="name" class="ctrl-name">
       </div>
