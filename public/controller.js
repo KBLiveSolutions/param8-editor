@@ -228,16 +228,24 @@ function renderControls() {
     const card = document.createElement("div");
     card.className = "ctrl-card";
 
-    const btnIcon = `<svg class="ctrl-icon" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="10" cy="10" r="2.5" fill="currentColor"/></svg>`;
-    const encIcon = `<svg class="ctrl-icon" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" fill="none"/><line x1="10" y1="10" x2="10" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+    const encoderBlock = `
+      <div class="ctrl-section">
+        <div class="ctrl-section-label">TURN</div>
+        <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
+               data-ctrl="enc" data-idx="${i}" data-field="name" class="ctrl-name">
+        <div class="ctrl-fields">
+          <span class="ctrl-type-fixed">CC</span>
+          ${numInputHtml("enc", i, enc.number)}
+          <span class="ctrl-ch-label">Ch</span>
+          ${channelSelectHtml("enc", i, enc.channel)}
+        </div>
+      </div>`;
 
     const buttonBlock = `
-      <div class="ctrl-block">
-        <div class="ctrl-block-header">
-          ${btnIcon}
-          <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
-                 data-ctrl="btn" data-idx="${i}" data-field="name" class="ctrl-name">
-        </div>
+      <div class="ctrl-section ctrl-section-push">
+        <div class="ctrl-section-label">PUSH</div>
+        <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
+               data-ctrl="btn" data-idx="${i}" data-field="name" class="ctrl-name">
         <div class="ctrl-fields">
           <select data-ctrl="btn" data-idx="${i}" data-field="type" class="ctrl-type">
             <option value="0" ${btn.type === 0 ? "selected" : ""}>CC</option>
@@ -246,6 +254,7 @@ function renderControls() {
           ${btn.type === 1
             ? noteSelectHtml(btn.number, i)
             : numInputHtml("btn", i, btn.number)}
+          <span class="ctrl-ch-label">Ch</span>
           ${channelSelectHtml("btn", i, btn.channel)}
           <label class="toggle-label ${btn.type === 0 ? '' : 'hidden'}" data-toggle-for="${i}">
             <input type="checkbox" ${btn.toggle ? "checked" : ""}
@@ -255,24 +264,11 @@ function renderControls() {
         </div>
       </div>`;
 
-    const encoderBlock = `
-      <div class="ctrl-block">
-        <div class="ctrl-block-header">
-          ${encIcon}
-          <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
-                 data-ctrl="enc" data-idx="${i}" data-field="name" class="ctrl-name">
-        </div>
-        <div class="ctrl-fields">
-          <span class="ctrl-type-fixed">CC</span>
-          ${numInputHtml("enc", i, enc.number)}
-          ${channelSelectHtml("enc", i, enc.channel)}
-        </div>
-      </div>`;
-
     card.innerHTML = `
       <div class="ctrl-number">${i + 1}</div>
-      ${buttonBlock}
+      <hr class="ctrl-separator">
       ${encoderBlock}
+      ${buttonBlock}
     `;
     grid.appendChild(card);
   }
