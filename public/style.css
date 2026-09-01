@@ -453,7 +453,7 @@ button.danger:hover { background: #300; }
 .controls-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  gap: 12px;
   max-width: 1100px;
   margin: 0 auto;
 }
