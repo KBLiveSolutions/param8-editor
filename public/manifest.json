@@ -1,0 +1,16 @@
+{
+  "name": "param8 Editor",
+  "short_name": "param8",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "description": "Configuration editor for the param8 MIDI controller",
+  "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
