@@ -267,13 +267,11 @@ function renderControls() {
         ${channelSelectHtml("enc", i, enc.channel)}
       </div>`;
 
-    const isBottomRow = i >= 4;
     card.innerHTML = `
-      ${!isBottomRow ? `<div class="ctrl-number">${i + 1}</div>` : ''}
-      ${isBottomRow ? encoderBlock : buttonBlock}
+      <div class="ctrl-number">${i + 1}</div>
+      ${buttonBlock}
       <hr class="ctrl-separator">
-      ${isBottomRow ? buttonBlock : encoderBlock}
-      ${isBottomRow ? `<div class="ctrl-number">${i + 1}</div>` : ''}
+      ${encoderBlock}
     `;
     grid.appendChild(card);
   }
