@@ -502,8 +502,8 @@ button.danger:hover { background: #300; }
 
 .ctrl-section .ctrl-name {
   display: block;
-  width: 100%;
-  margin-bottom: 4px;
+  width: 108px;
+  margin: 0 auto 4px;
   text-align: center;
   background: #222;
 }
@@ -544,7 +544,7 @@ button.danger:hover { background: #300; }
   border-radius: 0;
   font-size: 14px;
   font-family: inherit;
-  width: 100px;
+  width: 82px;
   height: var(--ctrl-height);
 }
 .ctrl-name::placeholder {

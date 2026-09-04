@@ -118,7 +118,6 @@ async function readSerialLoop() {
     const stateEl = document.getElementById("midi-state");
     stateEl.textContent = "Disconnected";
     stateEl.style.color = "#f44";
-    document.getElementById("controller-config").classList.add("hidden");
     document.getElementById("midi-connected-options").classList.add("hidden");
     document.getElementById("midi-connect").classList.remove("hidden");
   }
@@ -150,6 +149,13 @@ function onMessage(d) {
     const seconds = ((d[3] & 0x7F) << 7) | (d[4] & 0x7F);
     const select = document.getElementById("screensaver-select");
     if (select) select.value = String(seconds);
+    return;
+  }
+
+  if (status === 0x1B) {
+    const brightness = d[3] & 0x7F;
+    const select = document.getElementById("brightness-select");
+    if (select) select.value = String(brightness);
     return;
   }
 
@@ -423,6 +429,10 @@ function initControllerUI() {
     sendScreensaverTimeout(parseInt(e.target.value));
   });
 
+  document.getElementById("brightness-select").addEventListener("change", (e) => {
+    sendBrightness(parseInt(e.target.value));
+  });
+
   const loadInput = document.getElementById("ctrl-load-input");
   document.getElementById("ctrl-load").addEventListener("click", () => loadInput.click());
   loadInput.addEventListener("change", (e) => {
@@ -441,4 +451,8 @@ function sendLayoutChange(layoutValue) {
 
 function sendScreensaverTimeout(seconds) {
   serialSend([0xf0, 0x6f, 0x10, (seconds >> 7) & 0x7f, seconds & 0x7f, 0xf7]);
+}
+
+function sendBrightness(value) {
+  serialSend([0xf0, 0x6f, 0x1b, value & 0x7f, 0xf7]);
 }
