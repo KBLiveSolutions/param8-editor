@@ -35,7 +35,7 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Barlow Condensed', 'DIN Condensed', 'DIN Alternate', 'Arial Narrow', sans-serif;
+  font-family: 'Inter', 'Barlow Condensed', 'DIN Condensed', 'DIN Alternate', 'Arial Narrow', sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
