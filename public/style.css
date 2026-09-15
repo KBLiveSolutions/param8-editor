@@ -1,7 +1,7 @@
 :root {
-  --bg:             #000;
-  --bg-surface:     #1a1a1a;
-  --bg-input:       #000;
+  --bg:             #17181c;
+  --bg-surface:     #2d2f37;
+  --bg-input:       #17181c;
   --bg-header:      #000;
   --bg-sidebar:     #080808;
   --bg-button:      #1a1a1a;
@@ -404,6 +404,7 @@ button.danger:hover { background: #300; }
   width: 200px;
   height: var(--ctrl-height);
   font-size: 14px;
+  background: #0f1012;
 }
 
 .ctrl-toolbar {
@@ -505,7 +506,7 @@ button.danger:hover { background: #300; }
   width: 108px;
   margin: 0 auto 4px;
   text-align: center;
-  background: #222;
+  background: #0f1012;
 }
 
 .ctrl-fields {
