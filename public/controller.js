@@ -1,9 +1,9 @@
 let serialPort = null;
 let serialWriter = null;
 
-const FW_REPO = "kblivesolutions/param8_firmware";
-const FW_BRANCH = "master";
-const FW_MANIFEST_URL = `https://raw.githubusercontent.com/${FW_REPO}/${FW_BRANCH}/param8_firmware/manifest.json`;
+const FW_REPO = "kblivesolutions/param8-midi-controller";
+const FW_BRANCH = "main";
+const FW_MANIFEST_URL = `https://raw.githubusercontent.com/${FW_REPO}/${FW_BRANCH}/manifest.json`;
 
 let currentFirmwareVersion = null;
 let latestFirmwareInfo = null;
@@ -141,7 +141,7 @@ function requestPreset(preset) {
 }
 
 function requestVersion() {
-  serialSend([0xf0, 0x6f, 0x60, 0xf7]);
+  serialSend([0xf0, 0x6f, 0x13, 0x00, 0xf7]);
 }
 
 function compareVersions(a, b) {
@@ -194,7 +194,7 @@ function onMessage(d) {
   const status = d[2];
   console.log("SysEx received:", Array.from(d).map(b => b.toString(16)).join(" "));
 
-  if (status === 0x61) {
+  if (status === 0x14) {
     currentFirmwareVersion = `${d[3]}.${d[4]}.${d[5]}`;
     updateFirmwareVersionUI();
     return;
