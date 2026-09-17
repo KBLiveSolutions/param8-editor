@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initControllerUI();
   autoConnect();
+  fetchLatestFirmwareInfo();
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js");
