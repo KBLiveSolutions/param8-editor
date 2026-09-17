@@ -1,5 +1,12 @@
 let serialPort = null;
 let serialWriter = null;
+
+const FW_REPO = "kblivesolutions/param8-firmware";
+const FW_BRANCH = "main";
+const FW_MANIFEST_URL = `https://raw.githubusercontent.com/${FW_REPO}/${FW_BRANCH}/manifest.json`;
+
+let currentFirmwareVersion = null;
+let latestFirmwareInfo = null;
 let currentPreset = 0;
 let presetData = [];
 let retryRequestTimeout = null;
@@ -70,6 +77,7 @@ async function connectSerial(port) {
     readSerialLoop();
     await new Promise((r) => setTimeout(r, 500));
     requestPreset(currentPreset);
+    requestVersion();
     retryRequestTimeout = setTimeout(() => {
       if (presetData[currentPreset].encoders[0].number === 0 &&
           presetData[currentPreset].encoders[0].name === "") {
@@ -132,10 +140,65 @@ function requestPreset(preset) {
   serialSend([0xf0, 0x6f, 0x07, preset, 0xf7]);
 }
 
+function requestVersion() {
+  serialSend([0xf0, 0x6f, 0x13, 0x00, 0xf7]);
+}
+
+function compareVersions(a, b) {
+  const pa = a.split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = b.split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < 3; i++) {
+    if (pa[i] !== pb[i]) return pa[i] - pb[i];
+  }
+  return 0;
+}
+
+async function fetchLatestFirmwareInfo() {
+  try {
+    const res = await fetch(FW_MANIFEST_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    latestFirmwareInfo = await res.json();
+  } catch (e) {
+    console.error("Firmware manifest fetch failed:", e);
+    latestFirmwareInfo = null;
+  }
+  updateFirmwareVersionUI();
+}
+
+function updateFirmwareVersionUI() {
+  const versionEl = document.getElementById("fw-version");
+  const banner = document.getElementById("fw-update-banner");
+  const textEl = document.getElementById("fw-update-text");
+  const downloadLink = document.getElementById("fw-update-download");
+  if (!versionEl || !banner || !textEl || !downloadLink) return;
+
+  if (currentFirmwareVersion) {
+    versionEl.textContent = `Firmware v${currentFirmwareVersion}`;
+    versionEl.classList.remove("hidden");
+  }
+
+  if (currentFirmwareVersion && latestFirmwareInfo && latestFirmwareInfo.version) {
+    if (compareVersions(latestFirmwareInfo.version, currentFirmwareVersion) > 0) {
+      textEl.textContent = `Update available: v${latestFirmwareInfo.version}`;
+      downloadLink.href = `https://raw.githubusercontent.com/${FW_REPO}/${FW_BRANCH}/${latestFirmwareInfo.file}`;
+      downloadLink.setAttribute("download", latestFirmwareInfo.file.split("/").pop());
+      banner.classList.remove("hidden");
+      return;
+    }
+  }
+  banner.classList.add("hidden");
+}
+
 function onMessage(d) {
   if (d[0] !== 0xf0 || d[1] !== 0x6f) return;
   const status = d[2];
   console.log("SysEx received:", Array.from(d).map(b => b.toString(16)).join(" "));
+
+  if (status === 0x14) {
+    currentFirmwareVersion = `${d[3]}.${d[4]}.${d[5]}`;
+    updateFirmwareVersionUI();
+    return;
+  }
 
   if (status === 0x0e) {
     const layout = d[3];

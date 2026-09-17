@@ -22,6 +22,7 @@
     <section id="tab-controller" class="tab-content active">
       <div id="midi-status">
         <span id="midi-state">param8 not connected</span>
+        <span id="fw-version" class="hidden"></span>
         <button id="midi-connect">Connect param8</button>
         <div id="midi-connected-options" class="hidden">
           <span class="ctrl-ch-label">Layout</span>
@@ -48,6 +49,11 @@
             <option value="7200">120 min</option>
           </select>
         </div>
+      </div>
+      <div id="fw-update-banner" class="hidden">
+        <span id="fw-update-text"></span>
+        <a id="fw-update-download" href="#" download>Download update</a>
+        <span id="fw-update-instructions">Hold Shift, plug in the USB cable, then drag and drop the .uf2 file onto the RPI-RP2 drive.</span>
       </div>
       <div id="controller-config">
         <div class="ctrl-layout">

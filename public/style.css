@@ -329,10 +329,32 @@ button.danger:hover { background: #300; }
   border-radius: 0;
 }
 #midi-state { font-size: 14px; font-family: inherit; }
+#fw-version { font-size: 12px; color: var(--text-muted); font-family: inherit; }
 #midi-connected-options {
   display: flex; gap: 8px; align-items: center;
   margin-left: auto;
 }
+
+#fw-update-banner {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  margin: 0 24px 12px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--accent-border);
+  border-radius: 0;
+  font-size: 13px;
+}
+#fw-update-text { font-weight: 600; color: var(--text-bright); }
+#fw-update-download {
+  padding: 6px 14px;
+  background: var(--accent-bg);
+  color: #000;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+#fw-update-download:hover { background: var(--accent-hover); }
+#fw-update-instructions { color: var(--text-muted); }
 
 .config-section {
   background: var(--bg-surface);
