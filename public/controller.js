@@ -1,7 +1,7 @@
 let serialPort = null;
 let serialWriter = null;
 
-const FW_REPO = "kblivesolutions/param8-midi-controller";
+const FW_REPO = "kblivesolutions/param8-firmware";
 const FW_BRANCH = "main";
 const FW_MANIFEST_URL = `https://raw.githubusercontent.com/${FW_REPO}/${FW_BRANCH}/manifest.json`;
 
