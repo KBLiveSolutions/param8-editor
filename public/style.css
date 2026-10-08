@@ -533,6 +533,7 @@ button.danger:hover { background: #300; }
 
 .ctrl-section-push {
   border: 1px solid #555;
+  border-radius: var(--radius);
   margin: 6px 6px 8px;
 }
 
