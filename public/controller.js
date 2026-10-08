@@ -54,11 +54,11 @@ function noteSelectHtml(midi, idx) {
          `<select data-ctrl="btn" data-idx="${idx}" data-field="note-oct" class="ctrl-oct">${octOpts}</select>`;
 }
 
-for (let p = 0; p < 6; p++) {
+for (let p = 0; p < 24; p++) {
   presetData[p] = { encoders: [], buttons: [], presetName: "" };
   for (let i = 0; i < 8; i++) {
-    presetData[p].encoders[i] = { type: 0, number: 0, channel: 0, name: "" };
-    presetData[p].buttons[i] = { type: 0, number: 0, channel: 0, toggle: false, name: "" };
+    presetData[p].encoders[i] = { type: 0, number: 0, channel: 0, min: 0, max: 127, name: "" };
+    presetData[p].buttons[i] = { type: 0, number: 0, channel: 0, toggle: false, min: 0, max: 127, name: "" };
   }
 }
 
@@ -224,7 +224,7 @@ function onMessage(d) {
 
   if (status === 0x11) {
     const preset = d[3];
-    if (preset >= 6) return;
+    if (preset >= 24) return;
     let name = "";
     for (let j = 4; j < d.length - 1; j++) {
       name += String.fromCharCode(d[j]);
@@ -239,13 +239,19 @@ function onMessage(d) {
 
   const preset = d[3];
   const idx = d[4];
-  if (preset >= 6 || idx >= 8) return;
+  if (preset >= 24 || idx >= 8) return;
 
   if (status === 0x0c) {
+    // firmware sends: d[5]=ControlMidiType (0=CC,3=AT,4=PB), d[8]=hiRes
+    // convert to editor type: 0=CC, 1=CC14bit, 2=AT, 3=PB
+    const fwType = d[5], hiRes = d[8] === 1;
+    const encType = (fwType === 3) ? 2 : (fwType === 4) ? 3 : (hiRes ? 1 : 0);
     presetData[preset].encoders[idx] = {
-      type: d[5],
+      type: encType,
       number: d[6],
       channel: d[7],
+      min: d.length > 9  ? d[9]  : 0,
+      max: d.length > 10 ? d[10] : 127,
       name: presetData[preset].encoders[idx].name || "",
     };
   } else if (status === 0x0d) {
@@ -254,6 +260,8 @@ function onMessage(d) {
       number: d[6],
       channel: d[7],
       toggle: d[8] === 1,
+      min: d.length > 9  ? d[9]  : 0,
+      max: d.length > 10 ? d[10] : 127,
       name: presetData[preset].buttons[idx].name || "",
     };
   } else if (status === 0x0f) {
@@ -303,10 +311,23 @@ function renderControls() {
         <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
                data-ctrl="enc" data-idx="${i}" data-field="name" class="ctrl-name">
         <div class="ctrl-fields">
-          <span class="ctrl-type-fixed">CC</span>
-          ${numInputHtml("enc", i, enc.number)}
+          <select data-ctrl="enc" data-idx="${i}" data-field="type" class="ctrl-type">
+            <option value="0" ${enc.type === 0 ? "selected" : ""}>CC</option>
+            <option value="1" ${enc.type === 1 ? "selected" : ""}>CC 14bit</option>
+            <option value="2" ${enc.type === 2 ? "selected" : ""}>AT</option>
+            <option value="3" ${enc.type === 3 ? "selected" : ""}>PB</option>
+          </select>
+          ${(enc.type === 0 || enc.type === 1) ? numInputHtml("enc", i, enc.number) : ''}
           <span class="ctrl-ch-label">Ch</span>
           ${channelSelectHtml("enc", i, enc.channel)}
+        </div>
+        <div class="ctrl-fields ctrl-range">
+          <span class="ctrl-range-label">Min</span>
+          <input type="number" min="0" max="127" value="${enc.min}"
+                 data-ctrl="enc" data-idx="${i}" data-field="min" class="ctrl-range-input">
+          <span class="ctrl-range-label">Max</span>
+          <input type="number" min="0" max="127" value="${enc.max}"
+                 data-ctrl="enc" data-idx="${i}" data-field="max" class="ctrl-range-input">
         </div>
       </div>`;
 
@@ -319,6 +340,7 @@ function renderControls() {
           <select data-ctrl="btn" data-idx="${i}" data-field="type" class="ctrl-type">
             <option value="0" ${btn.type === 0 ? "selected" : ""}>CC</option>
             <option value="1" ${btn.type === 1 ? "selected" : ""}>Note</option>
+            <option value="2" ${btn.type === 2 ? "selected" : ""}>PC</option>
           </select>
           ${btn.type === 1
             ? noteSelectHtml(btn.number, i)
@@ -330,6 +352,14 @@ function renderControls() {
                    data-ctrl="btn" data-idx="${i}" data-field="toggle">
             Tgl
           </label>
+        </div>
+        <div class="ctrl-fields ctrl-range">
+          <span class="ctrl-range-label">Min</span>
+          <input type="number" min="0" max="127" value="${btn.min}"
+                 data-ctrl="btn" data-idx="${i}" data-field="min" class="ctrl-range-input">
+          <span class="ctrl-range-label">Max</span>
+          <input type="number" min="0" max="127" value="${btn.max}"
+                 data-ctrl="btn" data-idx="${i}" data-field="max" class="ctrl-range-input">
         </div>
       </div>`;
 
@@ -366,8 +396,16 @@ function onControlChange(e) {
   const pd = presetData[currentPreset];
 
   if (ctrl === "enc") {
+    if (field === "type") {
+      pd.encoders[idx].type = parseInt(el.value);
+      sendEncoder(currentPreset, idx);
+      renderControls();
+      return;
+    }
     if (field === "number") pd.encoders[idx].number = parseInt(el.value);
     if (field === "channel") pd.encoders[idx].channel = parseInt(el.value);
+    if (field === "min") pd.encoders[idx].min = Math.min(parseInt(el.value), pd.encoders[idx].max - 1);
+    if (field === "max") pd.encoders[idx].max = Math.max(parseInt(el.value), pd.encoders[idx].min + 1);
     if (field === "name") {
       pd.encoders[idx].name = el.value;
       sendControlName(currentPreset, idx, 0, el.value);
@@ -390,6 +428,8 @@ function onControlChange(e) {
     }
     if (field === "channel") pd.buttons[idx].channel = parseInt(el.value);
     if (field === "toggle") pd.buttons[idx].toggle = el.checked;
+    if (field === "min") pd.buttons[idx].min = Math.min(parseInt(el.value), pd.buttons[idx].max);
+    if (field === "max") pd.buttons[idx].max = Math.max(parseInt(el.value), pd.buttons[idx].min);
     if (field === "name") {
       pd.buttons[idx].name = el.value;
       sendControlName(currentPreset, idx, 1, el.value);
@@ -401,12 +441,16 @@ function onControlChange(e) {
 
 function sendEncoder(preset, idx) {
   const enc = presetData[preset].encoders[idx];
-  serialSend([0xf0, 0x6f, 0x0d, preset, idx, enc.type, enc.number, enc.channel, 0xf7]);
+  // sysex[5] = editor type: 0=CC, 1=CC14bit, 2=AT, 3=PB
+  // sysex[8] = hiRes flag (1 if CC14bit, for firmware backward compat)
+  serialSend([0xf0, 0x6f, 0x0d, preset, idx, enc.type, enc.number ?? 0, enc.channel,
+              enc.type === 1 ? 1 : 0, enc.min ?? 0, enc.max ?? 127, 0xf7]);
 }
 
 function sendButton(preset, idx) {
   const btn = presetData[preset].buttons[idx];
-  serialSend([0xf0, 0x6f, 0x0c, preset, idx, btn.type, btn.number, btn.channel, btn.toggle ? 1 : 0, 0xf7]);
+  serialSend([0xf0, 0x6f, 0x0c, preset, idx, btn.type, btn.number, btn.channel,
+              btn.toggle ? 1 : 0, btn.min ?? 0, btn.max ?? 127, 0xf7]);
 }
 
 function sendPresetName(preset, name) {
@@ -468,16 +512,30 @@ function loadPresetFromFile(file) {
 }
 
 function initControllerUI() {
+  // Mode tabs (User Presets / Global / Device)
   document.querySelectorAll(".preset-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
-      currentPreset = parseInt(btn.dataset.preset);
       document.querySelectorAll(".preset-tab").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      const nameInput = document.getElementById("preset-name-input");
-      nameInput.value = presetData[currentPreset].presetName || "";
-      nameInput.placeholder = "Preset " + (currentPreset + 1);
-      requestPreset(currentPreset);
+      document.querySelectorAll(".mode-section").forEach((s) => s.classList.add("hidden"));
+      document.getElementById("mode-" + btn.dataset.mode).classList.remove("hidden");
     });
+  });
+
+  // Preset selector (1–24)
+  const presetSelect = document.getElementById("preset-select");
+  for (let i = 1; i <= 24; i++) {
+    const opt = document.createElement("option");
+    opt.value = i - 1;
+    opt.textContent = "Preset " + i;
+    presetSelect.appendChild(opt);
+  }
+  presetSelect.addEventListener("change", () => {
+    currentPreset = parseInt(presetSelect.value);
+    const nameInput = document.getElementById("preset-name-input");
+    nameInput.value = presetData[currentPreset].presetName || "";
+    nameInput.placeholder = "Preset " + (currentPreset + 1);
+    requestPreset(currentPreset);
   });
 
   const presetNameInput = document.getElementById("preset-name-input");
