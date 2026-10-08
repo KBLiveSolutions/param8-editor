@@ -59,19 +59,26 @@
         <div class="ctrl-layout">
           <div class="ctrl-top-bar">
             <div class="preset-tabs">
-              <button class="preset-tab active" data-preset="0">Preset 1</button>
-              <button class="preset-tab" data-preset="1">Preset 2</button>
-              <button class="preset-tab" data-preset="2">Preset 3</button>
-              <button class="preset-tab" data-preset="3">Preset 4</button>
-              <button class="preset-tab" data-preset="4">Preset 5</button>
-              <button class="preset-tab" data-preset="5">Preset 6</button>
+              <button class="preset-tab active" data-mode="user">User Presets</button>
+              <button class="preset-tab" data-mode="global">Global</button>
+              <button class="preset-tab" data-mode="device">Device</button>
             </div>
           </div>
-          <div class="preset-name-wrap">
-            <span class="ctrl-ch-label">Preset name</span>
-            <input type="text" id="preset-name-input" maxlength="19" placeholder="Preset 1">
+
+          <div id="mode-user" class="mode-section">
+            <div class="preset-selector-bar">
+              <span class="ctrl-ch-label">Preset</span>
+              <select id="preset-select" class="ctrl-ch" style="width:110px"></select>
+            </div>
+            <div class="preset-name-wrap">
+              <span class="ctrl-ch-label">Preset name</span>
+              <input type="text" id="preset-name-input" maxlength="19" placeholder="Preset 1">
+            </div>
+            <div id="controls-grid" class="controls-grid"></div>
           </div>
-          <div id="controls-grid" class="controls-grid"></div>
+
+          <div id="mode-global" class="mode-section hidden"></div>
+          <div id="mode-device" class="mode-section hidden"></div>
 
           <div class="ctrl-section-divider"></div>
           <div class="ctrl-top-bar">

@@ -402,6 +402,16 @@ button.danger:hover { background: #300; }
   border-bottom-color: #fff;
 }
 
+.preset-selector-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 12px 0;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .preset-name-wrap {
   display: flex;
   align-items: center;
@@ -658,6 +668,43 @@ button.danger:hover { background: #300; }
   font-size: 14px;
   font-family: inherit;
   width: 42px;
+  height: var(--ctrl-height);
+}
+
+.hires-label {
+  font-size: 13px;
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.hires-label input[type="checkbox"] {
+  accent-color: #fff;
+}
+
+.ctrl-range {
+  margin-top: 3px;
+  gap: 4px;
+}
+
+.ctrl-range-label {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+}
+
+.ctrl-range-input {
+  width: 44px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-input);
+  color: var(--text-input);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 1px 4px;
   height: var(--ctrl-height);
 }
 
