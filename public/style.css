@@ -381,6 +381,7 @@ button.danger:hover { background: #300; }
 .preset-tabs {
   display: flex;
   gap: 0;
+  margin: 0 auto;
 }
 
 .preset-tab {
@@ -398,6 +399,11 @@ button.danger:hover { background: #300; }
   transition: color 0.1s;
 }
 .preset-tab:hover { color: #bbb; }
+.preset-tab.muted {
+  color: #444;
+  cursor: default;
+  pointer-events: none;
+}
 .preset-tab.active {
   color: #fff;
   border-bottom-color: #fff;
@@ -406,6 +412,7 @@ button.danger:hover { background: #300; }
 .preset-selector-bar {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 8px 0 12px 0;
   max-width: 1100px;
