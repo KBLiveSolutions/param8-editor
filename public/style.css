@@ -411,6 +411,9 @@ button.danger:hover { background: #300; }
   gap: 8px;
   padding: 8px 0 12px 0;
 }
+.preset-toolbar button {
+  font-size: 12px;
+}
 
 .ctrl-ch-label {
   font-size: 12px;
