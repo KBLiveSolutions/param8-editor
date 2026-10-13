@@ -399,11 +399,6 @@ button.danger:hover { background: #300; }
   transition: color 0.1s;
 }
 .preset-tab:hover { color: #bbb; }
-.preset-tab.muted {
-  color: #444;
-  cursor: default;
-  pointer-events: none;
-}
 .preset-tab.active {
   color: #fff;
   border-bottom-color: #fff;
