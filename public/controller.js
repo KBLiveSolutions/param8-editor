@@ -210,6 +210,8 @@ function updateFirmwareVersionUI() {
       textEl.textContent = `Update available: v${latestFirmwareInfo.version}`;
       downloadLink.href = `https://raw.githubusercontent.com/${FW_REPO}/${FW_BRANCH}/${latestFirmwareInfo.file}`;
       downloadLink.setAttribute("download", latestFirmwareInfo.file.split("/").pop());
+      const changelogLink = document.getElementById("fw-changelog-link");
+      if (changelogLink) changelogLink.href = `https://github.com/${FW_REPO}/releases/tag/v${latestFirmwareInfo.version}`;
       banner.classList.remove("hidden");
       return;
     }
