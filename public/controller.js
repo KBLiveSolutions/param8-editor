@@ -208,8 +208,8 @@ function updateFirmwareVersionUI() {
   if (currentFirmwareVersion && latestFirmwareInfo && latestFirmwareInfo.version) {
     if (compareVersions(latestFirmwareInfo.version, currentFirmwareVersion) > 0) {
       textEl.textContent = `Update available: v${latestFirmwareInfo.version}`;
-      downloadLink.href = `https://raw.githubusercontent.com/${FW_REPO}/${FW_BRANCH}/${latestFirmwareInfo.file}`;
-      downloadLink.setAttribute("download", latestFirmwareInfo.file.split("/").pop());
+      downloadLink.href = `https://github.com/${FW_REPO}/releases/download/v${latestFirmwareInfo.version}/${latestFirmwareInfo.file}`;
+      downloadLink.setAttribute("download", latestFirmwareInfo.file);
       banner.classList.remove("hidden");
       return;
     }
