@@ -23,6 +23,7 @@
       <div id="midi-status">
         <span id="midi-state">param8 not connected</span>
         <span id="fw-version" class="hidden"></span>
+        <a id="changelog-toggle" href="#">Changelog</a>
         <button id="midi-connect">Connect param8</button>
         <button id="midi-disconnect" class="hidden danger">Disconnect</button>
         <div id="midi-connected-options" class="hidden">
@@ -79,6 +80,16 @@
     </section>
 
   </main>
+
+  <div id="changelog-panel" class="hidden">
+    <div id="changelog-content">
+      <div id="changelog-header">
+        <h2>Firmware Changelog</h2>
+        <button id="changelog-close">✕</button>
+      </div>
+      <pre id="changelog-text">Loading…</pre>
+    </div>
+  </div>
 
   <div id="modal-overlay" class="hidden">
     <div id="modal">

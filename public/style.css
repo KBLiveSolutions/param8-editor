@@ -735,3 +735,33 @@ button.danger:hover { background: #300; }
 #modal-body { margin-bottom: 16px; font-size: 14px; }
 #modal-body input { width: 100%; margin-top: 8px; }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+#changelog-toggle {
+  font-size: 12px; color: var(--text-muted); text-decoration: none; font-family: inherit;
+}
+#changelog-toggle:hover { color: #fff; }
+
+#changelog-panel {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+}
+#changelog-content {
+  background: #111; border: 1px solid #333;
+  border-radius: var(--radius-lg); padding: 24px;
+  width: 620px; max-width: 90vw; max-height: 80vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+#changelog-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+#changelog-header h2 { font-size: 16px; color: #fff; margin: 0; font-family: inherit; }
+#changelog-close { padding: 4px 8px; font-size: 14px; }
+#changelog-text {
+  overflow-y: auto; flex: 1;
+  font-family: monospace; font-size: 12px; color: #ccc;
+  white-space: pre; line-height: 1.6; margin: 0;
+}
