@@ -1,5 +1,6 @@
 let serialPort = null;
 let serialWriter = null;
+let serialReader = null;
 
 const FW_REPO = "kblivesolutions/param8-firmware";
 const FW_BRANCH = "main";
@@ -62,8 +63,38 @@ for (let p = 0; p < 24; p++) {
   }
 }
 
+function setDisconnectedUI() {
+  const stateEl = document.getElementById("midi-state");
+  stateEl.textContent = "Disconnected";
+  stateEl.style.color = "#f44";
+  document.getElementById("midi-connected-options").classList.add("hidden");
+  document.getElementById("midi-connect").classList.remove("hidden");
+  document.getElementById("midi-disconnect").classList.add("hidden");
+}
+
+async function disconnectSerial() {
+  if (serialReader) {
+    await serialReader.cancel();
+    serialReader = null;
+  }
+  if (serialWriter) {
+    serialWriter.releaseLock();
+    serialWriter = null;
+  }
+  if (serialPort) {
+    await serialPort.close();
+    serialPort = null;
+  }
+  setDisconnectedUI();
+}
+
 async function connectSerial(port) {
   const stateEl = document.getElementById("midi-state");
+  if (!("serial" in navigator)) {
+    stateEl.textContent = "Web Serial not supported — use Chrome or Edge.";
+    stateEl.style.color = "#f44";
+    return;
+  }
   try {
     if (!port) port = await navigator.serial.requestPort();
     serialPort = port;
@@ -74,6 +105,7 @@ async function connectSerial(port) {
     document.getElementById("controller-config").classList.remove("hidden");
     document.getElementById("midi-connected-options").classList.remove("hidden");
     document.getElementById("midi-connect").classList.add("hidden");
+    document.getElementById("midi-disconnect").classList.remove("hidden");
     readSerialLoop();
     await new Promise((r) => setTimeout(r, 500));
     requestPreset(currentPreset);
@@ -99,12 +131,12 @@ async function autoConnect() {
 }
 
 async function readSerialLoop() {
-  const reader = serialPort.readable.getReader();
+  serialReader = serialPort.readable.getReader();
   let buf = [];
   let inSysEx = false;
   try {
     while (true) {
-      const { value, done } = await reader.read();
+      const { value, done } = await serialReader.read();
       if (done) break;
       for (const b of value) {
         if (b === 0xF0) {
@@ -120,14 +152,10 @@ async function readSerialLoop() {
       }
     }
   } catch (e) {
-    console.error("Serial read error", e);
-    serialPort = null;
-    serialWriter = null;
-    const stateEl = document.getElementById("midi-state");
-    stateEl.textContent = "Disconnected";
-    stateEl.style.color = "#f44";
-    document.getElementById("midi-connected-options").classList.add("hidden");
-    document.getElementById("midi-connect").classList.remove("hidden");
+    if (serialPort !== null) console.error("Serial read error", e);
+  } finally {
+    serialReader = null;
+    setDisconnectedUI();
   }
 }
 

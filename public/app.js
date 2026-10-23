@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("midi-connect").addEventListener("click", () => connectSerial());
+  document.getElementById("midi-disconnect").addEventListener("click", () => disconnectSerial());
 
   document.querySelectorAll(".layout-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
