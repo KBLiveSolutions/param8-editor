@@ -503,16 +503,26 @@ async function savePresetToFile() {
   const pd = presetData[currentPreset];
   const data = { preset: currentPreset + 1, presetName: pd.presetName, encoders: pd.encoders, buttons: pd.buttons };
   const json = JSON.stringify(data, null, 2);
-  try {
-    const handle = await window.showSaveFilePicker({
-      suggestedName: `param8-preset-${currentPreset + 1}.json`,
-      types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
-    });
-    const writable = await handle.createWritable();
-    await writable.write(json);
-    await writable.close();
-  } catch (e) {
-    if (e.name !== "AbortError") console.error("Save failed", e);
+  const filename = `param8-preset-${currentPreset + 1}.json`;
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+    } catch (e) {
+      if (e.name !== "AbortError") console.error("Save failed", e);
+    }
+  } else {
+    const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }
 
