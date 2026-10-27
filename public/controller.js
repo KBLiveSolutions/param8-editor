@@ -111,7 +111,7 @@ function noteSelectHtml(midi, idx, ctrl = "btn") {
 
 function fnSelectHtml(ctrl, idx, table, currentFnId) {
   const groups = [...new Set(table.map(f => f.group))];
-  let opts = `<option value="0" ${currentFnId === 0 ? 'selected' : ''}>Custom MIDI</option>`;
+  let opts = '';
   for (const g of groups) {
     opts += `<optgroup label="${g}">`;
     for (const fn of table.filter(f => f.group === g)) {
@@ -131,8 +131,8 @@ for (let p = 0; p < 24; p++) {
 }
 
 let globalData = {
-  encoders: Array.from({ length: 8 }, () => ({ isFunction: false, fnId: 73, type: 0, number: 0, channel: 0, min: 0, max: 127 })),
-  buttons:  Array.from({ length: 8 }, () => ({ isFunction: false, fnId: 1,  type: 0, number: 0, channel: 0, toggle: false, min: 0, max: 127 })),
+  encoders: Array.from({ length: 8 }, () => ({ fnId: 73 })),
+  buttons:  Array.from({ length: 8 }, () => ({ fnId: 1 })),
 };
 
 function setDisconnectedUI() {
@@ -326,16 +326,7 @@ function onMessage(d) {
   if (status === 0x1c) {
     const idx = d[3];
     if (idx >= 8) return;
-    const isFunction = d[4] === 1;
-    const fnId = d[5];
-    const fwType = d[6], hiRes = d[9] === 1;
-    const encType = (fwType === 3) ? 2 : (fwType === 4) ? 3 : (hiRes ? 1 : 0);
-    globalData.encoders[idx] = {
-      isFunction, fnId,
-      type: encType, number: d[7], channel: d[8],
-      min: d.length > 10 ? d[10] : 0,
-      max: d.length > 11 ? d[11] : 127,
-    };
+    globalData.encoders[idx].fnId = d[4];
     renderGlobalControls();
     return;
   }
@@ -343,13 +334,7 @@ function onMessage(d) {
   if (status === 0x1d) {
     const idx = d[3];
     if (idx >= 8) return;
-    globalData.buttons[idx] = {
-      isFunction: d[4] === 1, fnId: d[5],
-      type: d[6], number: d[7], channel: d[8],
-      toggle: d[9] === 1,
-      min: d.length > 10 ? d[10] : 0,
-      max: d.length > 11 ? d[11] : 127,
-    };
+    globalData.buttons[idx].fnId = d[4];
     renderGlobalControls();
     return;
   }
@@ -728,23 +713,11 @@ function requestGlobal() {
 }
 
 function sendGlobalEncoder(idx) {
-  const enc = globalData.encoders[idx];
-  serialSend([0xf0, 0x6f, 0x1c, idx,
-              enc.isFunction ? 1 : 0,
-              enc.isFunction ? enc.fnId : 0,
-              enc.type, enc.number ?? 0, enc.channel,
-              enc.type === 1 ? 1 : 0, enc.min ?? 0, enc.max ?? 127,
-              0xf7]);
+  serialSend([0xf0, 0x6f, 0x1c, idx, globalData.encoders[idx].fnId, 0xf7]);
 }
 
 function sendGlobalButton(idx) {
-  const btn = globalData.buttons[idx];
-  serialSend([0xf0, 0x6f, 0x1d, idx,
-              btn.isFunction ? 1 : 0,
-              btn.isFunction ? btn.fnId : 0,
-              btn.type, btn.number, btn.channel,
-              btn.toggle ? 1 : 0, btn.min ?? 0, btn.max ?? 127,
-              0xf7]);
+  serialSend([0xf0, 0x6f, 0x1d, idx, globalData.buttons[idx].fnId, 0xf7]);
 }
 
 function renderGlobalControls() {
@@ -756,52 +729,6 @@ function renderGlobalControls() {
   grid.style.marginTop = "12px";
 
   for (let i = 0; i < 8; i++) {
-    const enc = globalData.encoders[i];
-    const btn = globalData.buttons[i];
-    const encFnId = enc.isFunction ? enc.fnId : 0;
-    const btnFnId = btn.isFunction ? btn.fnId : 0;
-
-    const customEncFields = !enc.isFunction ? `
-      <div class="ctrl-fields">
-        <select data-ctrl="genc" data-idx="${i}" data-field="type" class="ctrl-type">
-          <option value="0" ${enc.type === 0 ? 'selected' : ''}>CC</option>
-          <option value="1" ${enc.type === 1 ? 'selected' : ''}>CC 14bit</option>
-          <option value="2" ${enc.type === 2 ? 'selected' : ''}>AT</option>
-          <option value="3" ${enc.type === 3 ? 'selected' : ''}>PB</option>
-        </select>
-        ${(enc.type === 0 || enc.type === 1) ? numInputHtml("genc", i, enc.number) : ''}
-        <span class="ctrl-ch-label">Ch</span>
-        ${channelSelectHtml("genc", i, enc.channel)}
-      </div>
-      <div class="ctrl-fields ctrl-range">
-        <span class="ctrl-range-label">Min</span>
-        <input type="number" min="0" max="127" value="${enc.min}" data-ctrl="genc" data-idx="${i}" data-field="min" class="ctrl-range-input">
-        <span class="ctrl-range-label">Max</span>
-        <input type="number" min="0" max="127" value="${enc.max}" data-ctrl="genc" data-idx="${i}" data-field="max" class="ctrl-range-input">
-      </div>` : '';
-
-    const customBtnFields = !btn.isFunction ? `
-      <div class="ctrl-fields">
-        <select data-ctrl="gbtn" data-idx="${i}" data-field="type" class="ctrl-type">
-          <option value="0" ${btn.type === 0 ? 'selected' : ''}>CC</option>
-          <option value="1" ${btn.type === 1 ? 'selected' : ''}>Note</option>
-          <option value="2" ${btn.type === 2 ? 'selected' : ''}>PC</option>
-        </select>
-        ${btn.type === 1 ? noteSelectHtml(btn.number, i, "gbtn") : numInputHtml("gbtn", i, btn.number)}
-        <span class="ctrl-ch-label">Ch</span>
-        ${channelSelectHtml("gbtn", i, btn.channel)}
-        <label class="toggle-label ${btn.type === 0 ? '' : 'hidden'}">
-          <input type="checkbox" ${btn.toggle ? 'checked' : ''} data-ctrl="gbtn" data-idx="${i}" data-field="toggle">
-          Tgl
-        </label>
-      </div>
-      <div class="ctrl-fields ctrl-range">
-        <span class="ctrl-range-label">Min</span>
-        <input type="number" min="0" max="127" value="${btn.min}" data-ctrl="gbtn" data-idx="${i}" data-field="min" class="ctrl-range-input">
-        <span class="ctrl-range-label">Max</span>
-        <input type="number" min="0" max="127" value="${btn.max}" data-ctrl="gbtn" data-idx="${i}" data-field="max" class="ctrl-range-input">
-      </div>` : '';
-
     const card = document.createElement("div");
     card.className = "ctrl-card";
     card.innerHTML = `
@@ -810,16 +737,14 @@ function renderGlobalControls() {
       <div class="ctrl-section">
         <div class="ctrl-section-label">TURN</div>
         <div class="ctrl-fields">
-          ${fnSelectHtml("genc", i, ENCODER_FUNCTION_TABLE, encFnId)}
+          ${fnSelectHtml("genc", i, ENCODER_FUNCTION_TABLE, globalData.encoders[i].fnId)}
         </div>
-        ${customEncFields}
       </div>
       <div class="ctrl-section ctrl-section-push">
         <div class="ctrl-section-label">PUSH</div>
         <div class="ctrl-fields">
-          ${fnSelectHtml("gbtn", i, BUTTON_FUNCTION_TABLE, btnFnId)}
+          ${fnSelectHtml("gbtn", i, BUTTON_FUNCTION_TABLE, globalData.buttons[i].fnId)}
         </div>
-        ${customBtnFields}
       </div>
     `;
     grid.appendChild(card);
@@ -827,19 +752,8 @@ function renderGlobalControls() {
 
   container.appendChild(grid);
 
-  grid.querySelectorAll("select, input").forEach(el => {
+  grid.querySelectorAll("select").forEach(el => {
     el.addEventListener("change", onGlobalControlChange);
-  });
-
-  grid.querySelectorAll(".ctrl-num-chevrons button").forEach(chevron => {
-    chevron.addEventListener("click", () => {
-      const wrap = chevron.closest(".ctrl-num-wrap");
-      const input = wrap.querySelector("input");
-      const dir = parseInt(chevron.dataset.dir);
-      let val = Math.min(127, Math.max(0, parseInt(input.value) + dir));
-      input.value = val;
-      input.dispatchEvent(new Event("change", { bubbles: true }));
-    });
   });
 }
 
@@ -847,56 +761,12 @@ function onGlobalControlChange(e) {
   const el = e.target;
   const ctrl = el.dataset.ctrl;
   const idx = parseInt(el.dataset.idx);
-  const field = el.dataset.field;
 
   if (ctrl === "genc") {
-    const enc = globalData.encoders[idx];
-    if (field === "fn") {
-      const fnId = parseInt(el.value);
-      enc.isFunction = fnId !== 0;
-      if (fnId !== 0) enc.fnId = fnId;
-      sendGlobalEncoder(idx);
-      renderGlobalControls();
-      return;
-    }
-    if (field === "type") {
-      enc.type = parseInt(el.value);
-      sendGlobalEncoder(idx);
-      renderGlobalControls();
-      return;
-    }
-    if (field === "number") enc.number = parseInt(el.value);
-    if (field === "channel") enc.channel = parseInt(el.value);
-    if (field === "min") enc.min = Math.min(parseInt(el.value), enc.max - 1);
-    if (field === "max") enc.max = Math.max(parseInt(el.value), enc.min + 1);
+    globalData.encoders[idx].fnId = parseInt(el.value);
     sendGlobalEncoder(idx);
   } else if (ctrl === "gbtn") {
-    const btn = globalData.buttons[idx];
-    if (field === "fn") {
-      const fnId = parseInt(el.value);
-      btn.isFunction = fnId !== 0;
-      if (fnId !== 0) btn.fnId = fnId;
-      sendGlobalButton(idx);
-      renderGlobalControls();
-      return;
-    }
-    if (field === "type") {
-      btn.type = parseInt(el.value);
-      sendGlobalButton(idx);
-      renderGlobalControls();
-      return;
-    }
-    if (field === "number") btn.number = parseInt(el.value);
-    if (field === "note-name" || field === "note-oct") {
-      const card = el.closest(".ctrl-card");
-      const nameEl = card.querySelector('[data-field="note-name"]');
-      const octEl  = card.querySelector('[data-field="note-oct"]');
-      btn.number = noteToMidi(nameEl.value, parseInt(octEl.value));
-    }
-    if (field === "channel") btn.channel = parseInt(el.value);
-    if (field === "toggle") btn.toggle = el.checked;
-    if (field === "min") btn.min = Math.min(parseInt(el.value), btn.max);
-    if (field === "max") btn.max = Math.max(parseInt(el.value), btn.min);
+    globalData.buttons[idx].fnId = parseInt(el.value);
     sendGlobalButton(idx);
   }
 }
