@@ -765,7 +765,13 @@ function renderGlobalControls() {
       e.stopPropagation();
       const wasOpen = dropdown.style.display === 'block';
       document.querySelectorAll('.fnm-dropdown').forEach(d => { d.style.display = 'none'; });
-      dropdown.style.display = wasOpen ? 'none' : 'block';
+      if (!wasOpen) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.top  = (rect.bottom + 2) + 'px';
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.display = 'block';
+      }
     });
     menu.querySelectorAll('.fnm-item').forEach(item => {
       item.addEventListener('click', e => {
