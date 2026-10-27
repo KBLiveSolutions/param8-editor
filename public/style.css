@@ -575,8 +575,11 @@ button.danger:hover { background: #300; }
 }
 .ctrl-fn-tab:first-child { border-radius: var(--radius) 0 0 var(--radius); }
 .ctrl-fn-tab:last-child  { border-radius: 0 var(--radius) var(--radius) 0; border-left: none; }
-.ctrl-fn-tab.active { background: #fff; border-color: #fff; color: #000; }
 .ctrl-fn-tab:not(.active):hover { color: #aaa; }
+.ctrl-fn-tab-user.active { background: #1e3a1e; color: #7af57a; border-color: #2a7a2a; }
+.ctrl-fn-tab-daw.active  { background: #1e3a5f; color: #7ab8f5; border-color: #2a5a9a; }
+
+#controls-grid .ctrl-section { min-height: 152px; }
 
 .fnm { position: relative; width: 100%; }
 

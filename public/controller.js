@@ -460,8 +460,8 @@ function renderControls() {
 
     const fnTabs = (ctrl, idx, isFunc) =>
       `<div class="ctrl-fn-tabs">
-        <button class="ctrl-fn-tab${!isFunc ? ' active' : ''}" data-ctrl="${ctrl}" data-idx="${idx}" data-val="false">User</button>
-        <button class="ctrl-fn-tab${isFunc  ? ' active' : ''}" data-ctrl="${ctrl}" data-idx="${idx}" data-val="true">DAW</button>
+        <button class="ctrl-fn-tab ctrl-fn-tab-user${!isFunc ? ' active' : ''}" data-ctrl="${ctrl}" data-idx="${idx}" data-val="false">User</button>
+        <button class="ctrl-fn-tab ctrl-fn-tab-daw${isFunc  ? ' active' : ''}" data-ctrl="${ctrl}" data-idx="${idx}" data-val="true">DAW</button>
       </div>`;
 
     const encoderBlock = enc.isFunction
