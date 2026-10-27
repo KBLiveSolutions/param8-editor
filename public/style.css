@@ -555,6 +555,29 @@ button.danger:hover { background: #300; }
   height: var(--ctrl-height);
 }
 
+.ctrl-fn-tabs {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 4px;
+}
+.ctrl-fn-tab {
+  padding: 1px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--border-input);
+  background: #000;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.1s;
+}
+.ctrl-fn-tab:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.ctrl-fn-tab:last-child  { border-radius: 0 var(--radius) var(--radius) 0; border-left: none; }
+.ctrl-fn-tab.active { background: #fff; border-color: #fff; color: #000; }
+.ctrl-fn-tab:not(.active):hover { color: #aaa; }
+
 .fnm { position: relative; width: 100%; }
 
 .fnm-trigger {

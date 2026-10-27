@@ -129,11 +129,36 @@ function fnMenuHtml(ctrl, idx, table, currentFnId) {
   </div>`;
 }
 
+function attachFnmListeners(container, onItemSelect) {
+  container.querySelectorAll('.fnm').forEach(menu => {
+    const dropdown = menu.querySelector('.fnm-dropdown');
+    menu.querySelector('.fnm-trigger').addEventListener('click', e => {
+      e.stopPropagation();
+      const wasOpen = dropdown.style.display === 'block';
+      document.querySelectorAll('.fnm-dropdown').forEach(d => { d.style.display = 'none'; });
+      if (!wasOpen) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        dropdown.style.position = 'fixed';
+        dropdown.style.top  = (rect.bottom + 2) + 'px';
+        dropdown.style.left = rect.left + 'px';
+        dropdown.style.display = 'block';
+      }
+    });
+    menu.querySelectorAll('.fnm-item').forEach(item => {
+      item.addEventListener('click', e => {
+        e.stopPropagation();
+        dropdown.style.display = 'none';
+        onItemSelect(menu.dataset.ctrl, parseInt(menu.dataset.idx), parseInt(item.dataset.value));
+      });
+    });
+  });
+}
+
 for (let p = 0; p < 24; p++) {
   presetData[p] = { encoders: [], buttons: [], presetName: "" };
   for (let i = 0; i < 8; i++) {
-    presetData[p].encoders[i] = { type: 0, number: 0, channel: 0, min: 0, max: 127, name: "" };
-    presetData[p].buttons[i] = { type: 0, number: 0, channel: 0, toggle: false, min: 0, max: 127, name: "" };
+    presetData[p].encoders[i] = { type: 0, number: 0, channel: 0, min: 0, max: 127, name: "", isFunction: false, fnId: 73 };
+    presetData[p].buttons[i]  = { type: 0, number: 0, channel: 0, toggle: false, min: 0, max: 127, name: "", isFunction: false, fnId: 1 };
   }
 }
 
@@ -377,6 +402,8 @@ function onMessage(d) {
       min: d.length > 9  ? d[9]  : 0,
       max: d.length > 10 ? d[10] : 127,
       name: presetData[preset].encoders[idx].name || "",
+      isFunction: d.length > 11 ? d[11] === 1 : false,
+      fnId:       d.length > 12 ? d[12] : 73,
     };
   } else if (status === 0x0d) {
     presetData[preset].buttons[idx] = {
@@ -387,6 +414,8 @@ function onMessage(d) {
       min: d.length > 9  ? d[9]  : 0,
       max: d.length > 10 ? d[10] : 127,
       name: presetData[preset].buttons[idx].name || "",
+      isFunction: d.length > 11 ? d[11] === 1 : false,
+      fnId:       d.length > 12 ? d[12] : 1,
     };
   } else if (status === 0x0f) {
     const isButton = d[5];
@@ -429,63 +458,79 @@ function renderControls() {
     const card = document.createElement("div");
     card.className = "ctrl-card";
 
-    const encoderBlock = `
-      <div class="ctrl-section">
-        <div class="ctrl-section-label">TURN</div>
-        <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
-               data-ctrl="enc" data-idx="${i}" data-field="name" class="ctrl-name">
-        <div class="ctrl-fields">
-          <select data-ctrl="enc" data-idx="${i}" data-field="type" class="ctrl-type">
-            <option value="0" ${enc.type === 0 ? "selected" : ""}>CC</option>
-            <option value="1" ${enc.type === 1 ? "selected" : ""}>CC 14bit</option>
-            <option value="2" ${enc.type === 2 ? "selected" : ""}>AT</option>
-            <option value="3" ${enc.type === 3 ? "selected" : ""}>PB</option>
-          </select>
-          ${(enc.type === 0 || enc.type === 1) ? numInputHtml("enc", i, enc.number) : ''}
-          <span class="ctrl-ch-label">Ch</span>
-          ${channelSelectHtml("enc", i, enc.channel)}
-        </div>
-        <div class="ctrl-fields ctrl-range">
-          <span class="ctrl-range-label">Min</span>
-          <input type="number" min="0" max="127" value="${enc.min}"
-                 data-ctrl="enc" data-idx="${i}" data-field="min" class="ctrl-range-input">
-          <span class="ctrl-range-label">Max</span>
-          <input type="number" min="0" max="127" value="${enc.max}"
-                 data-ctrl="enc" data-idx="${i}" data-field="max" class="ctrl-range-input">
-        </div>
+    const fnTabs = (ctrl, idx, isFunc) =>
+      `<div class="ctrl-fn-tabs">
+        <button class="ctrl-fn-tab${!isFunc ? ' active' : ''}" data-ctrl="${ctrl}" data-idx="${idx}" data-val="false">User</button>
+        <button class="ctrl-fn-tab${isFunc  ? ' active' : ''}" data-ctrl="${ctrl}" data-idx="${idx}" data-val="true">DAW</button>
       </div>`;
 
-    const buttonBlock = `
-      <div class="ctrl-section ctrl-section-push">
-        <div class="ctrl-section-label">PUSH</div>
-        <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
-               data-ctrl="btn" data-idx="${i}" data-field="name" class="ctrl-name">
-        <div class="ctrl-fields">
-          <select data-ctrl="btn" data-idx="${i}" data-field="type" class="ctrl-type">
-            <option value="0" ${btn.type === 0 ? "selected" : ""}>CC</option>
-            <option value="1" ${btn.type === 1 ? "selected" : ""}>Note</option>
-            <option value="2" ${btn.type === 2 ? "selected" : ""}>PC</option>
-          </select>
-          ${btn.type === 1
-            ? noteSelectHtml(btn.number, i)
-            : numInputHtml("btn", i, btn.number)}
-          <span class="ctrl-ch-label">Ch</span>
-          ${channelSelectHtml("btn", i, btn.channel)}
-          <label class="toggle-label ${btn.type === 0 ? '' : 'hidden'}" data-toggle-for="${i}">
-            <input type="checkbox" ${btn.toggle ? "checked" : ""}
-                   data-ctrl="btn" data-idx="${i}" data-field="toggle">
-            Tgl
-          </label>
-        </div>
-        <div class="ctrl-fields ctrl-range">
-          <span class="ctrl-range-label">Min</span>
-          <input type="number" min="0" max="127" value="${btn.min}"
-                 data-ctrl="btn" data-idx="${i}" data-field="min" class="ctrl-range-input">
-          <span class="ctrl-range-label">Max</span>
-          <input type="number" min="0" max="127" value="${btn.max}"
-                 data-ctrl="btn" data-idx="${i}" data-field="max" class="ctrl-range-input">
-        </div>
-      </div>`;
+    const encoderBlock = enc.isFunction
+      ? `<div class="ctrl-section">
+           <div class="ctrl-section-label">TURN</div>
+           ${fnTabs("enc", i, true)}
+           <div class="ctrl-fields">${fnMenuHtml("enc", i, ENCODER_FUNCTION_TABLE, enc.fnId)}</div>
+         </div>`
+      : `<div class="ctrl-section">
+           <div class="ctrl-section-label">TURN</div>
+           ${fnTabs("enc", i, false)}
+           <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
+                  data-ctrl="enc" data-idx="${i}" data-field="name" class="ctrl-name">
+           <div class="ctrl-fields">
+             <select data-ctrl="enc" data-idx="${i}" data-field="type" class="ctrl-type">
+               <option value="0" ${enc.type === 0 ? "selected" : ""}>CC</option>
+               <option value="1" ${enc.type === 1 ? "selected" : ""}>CC 14bit</option>
+               <option value="2" ${enc.type === 2 ? "selected" : ""}>AT</option>
+               <option value="3" ${enc.type === 3 ? "selected" : ""}>PB</option>
+             </select>
+             ${(enc.type === 0 || enc.type === 1) ? numInputHtml("enc", i, enc.number) : ''}
+             <span class="ctrl-ch-label">Ch</span>
+             ${channelSelectHtml("enc", i, enc.channel)}
+           </div>
+           <div class="ctrl-fields ctrl-range">
+             <span class="ctrl-range-label">Min</span>
+             <input type="number" min="0" max="127" value="${enc.min}"
+                    data-ctrl="enc" data-idx="${i}" data-field="min" class="ctrl-range-input">
+             <span class="ctrl-range-label">Max</span>
+             <input type="number" min="0" max="127" value="${enc.max}"
+                    data-ctrl="enc" data-idx="${i}" data-field="max" class="ctrl-range-input">
+           </div>
+         </div>`;
+
+    const buttonBlock = btn.isFunction
+      ? `<div class="ctrl-section ctrl-section-push">
+           <div class="ctrl-section-label">PUSH</div>
+           ${fnTabs("btn", i, true)}
+           <div class="ctrl-fields">${fnMenuHtml("btn", i, BUTTON_FUNCTION_TABLE, btn.fnId)}</div>
+         </div>`
+      : `<div class="ctrl-section ctrl-section-push">
+           <div class="ctrl-section-label">PUSH</div>
+           ${fnTabs("btn", i, false)}
+           <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
+                  data-ctrl="btn" data-idx="${i}" data-field="name" class="ctrl-name">
+           <div class="ctrl-fields">
+             <select data-ctrl="btn" data-idx="${i}" data-field="type" class="ctrl-type">
+               <option value="0" ${btn.type === 0 ? "selected" : ""}>CC</option>
+               <option value="1" ${btn.type === 1 ? "selected" : ""}>Note</option>
+               <option value="2" ${btn.type === 2 ? "selected" : ""}>PC</option>
+             </select>
+             ${btn.type === 1 ? noteSelectHtml(btn.number, i) : numInputHtml("btn", i, btn.number)}
+             <span class="ctrl-ch-label">Ch</span>
+             ${channelSelectHtml("btn", i, btn.channel)}
+             <label class="toggle-label ${btn.type === 0 ? '' : 'hidden'}" data-toggle-for="${i}">
+               <input type="checkbox" ${btn.toggle ? "checked" : ""}
+                      data-ctrl="btn" data-idx="${i}" data-field="toggle">
+               Tgl
+             </label>
+           </div>
+           <div class="ctrl-fields ctrl-range">
+             <span class="ctrl-range-label">Min</span>
+             <input type="number" min="0" max="127" value="${btn.min}"
+                    data-ctrl="btn" data-idx="${i}" data-field="min" class="ctrl-range-input">
+             <span class="ctrl-range-label">Max</span>
+             <input type="number" min="0" max="127" value="${btn.max}"
+                    data-ctrl="btn" data-idx="${i}" data-field="max" class="ctrl-range-input">
+           </div>
+         </div>`;
 
     card.innerHTML = `
       <div class="ctrl-number">${i + 1}</div>
@@ -509,6 +554,29 @@ function renderControls() {
       input.value = val;
       input.dispatchEvent(new Event("change", { bubbles: true }));
     });
+  });
+
+  grid.querySelectorAll(".ctrl-fn-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      const pd = presetData[currentPreset];
+      const ctrl = tab.dataset.ctrl;
+      const idx  = parseInt(tab.dataset.idx);
+      const isFunction = tab.dataset.val === "true";
+      if (ctrl === "enc") pd.encoders[idx].isFunction = isFunction;
+      else                pd.buttons[idx].isFunction  = isFunction;
+      if (ctrl === "enc") sendEncoder(currentPreset, idx);
+      else                sendButton(currentPreset, idx);
+      renderControls();
+    });
+  });
+
+  attachFnmListeners(grid, (ctrl, idx, fnId) => {
+    const pd = presetData[currentPreset];
+    if (ctrl === 'enc') pd.encoders[idx].fnId = fnId;
+    else                pd.buttons[idx].fnId  = fnId;
+    if (ctrl === 'enc') sendEncoder(currentPreset, idx);
+    else                sendButton(currentPreset, idx);
+    renderControls();
   });
 }
 
@@ -565,16 +633,18 @@ function onControlChange(e) {
 
 function sendEncoder(preset, idx) {
   const enc = presetData[preset].encoders[idx];
-  // sysex[5] = editor type: 0=CC, 1=CC14bit, 2=AT, 3=PB
-  // sysex[8] = hiRes flag (1 if CC14bit, for firmware backward compat)
   serialSend([0xf0, 0x6f, 0x0d, preset, idx, enc.type, enc.number ?? 0, enc.channel,
-              enc.type === 1 ? 1 : 0, enc.min ?? 0, enc.max ?? 127, 0xf7]);
+              enc.type === 1 ? 1 : 0, enc.min ?? 0, enc.max ?? 127,
+              enc.isFunction ? 1 : 0, enc.isFunction ? enc.fnId : 0,
+              0xf7]);
 }
 
 function sendButton(preset, idx) {
   const btn = presetData[preset].buttons[idx];
   serialSend([0xf0, 0x6f, 0x0c, preset, idx, btn.type, btn.number, btn.channel,
-              btn.toggle ? 1 : 0, btn.min ?? 0, btn.max ?? 127, 0xf7]);
+              btn.toggle ? 1 : 0, btn.min ?? 0, btn.max ?? 127,
+              btn.isFunction ? 1 : 0, btn.isFunction ? btn.fnId : 0,
+              0xf7]);
 }
 
 function sendPresetName(preset, name) {
@@ -759,37 +829,15 @@ function renderGlobalControls() {
 
   container.appendChild(grid);
 
-  grid.querySelectorAll('.fnm').forEach(menu => {
-    const dropdown = menu.querySelector('.fnm-dropdown');
-    menu.querySelector('.fnm-trigger').addEventListener('click', e => {
-      e.stopPropagation();
-      const wasOpen = dropdown.style.display === 'block';
-      document.querySelectorAll('.fnm-dropdown').forEach(d => { d.style.display = 'none'; });
-      if (!wasOpen) {
-        const rect = e.currentTarget.getBoundingClientRect();
-        dropdown.style.position = 'fixed';
-        dropdown.style.top  = (rect.bottom + 2) + 'px';
-        dropdown.style.left = rect.left + 'px';
-        dropdown.style.display = 'block';
-      }
-    });
-    menu.querySelectorAll('.fnm-item').forEach(item => {
-      item.addEventListener('click', e => {
-        e.stopPropagation();
-        dropdown.style.display = 'none';
-        const ctrl = menu.dataset.ctrl;
-        const idx  = parseInt(menu.dataset.idx);
-        const fnId = parseInt(item.dataset.value);
-        if (ctrl === 'genc') {
-          globalData.encoders[idx].fnId = fnId;
-          sendGlobalEncoder(idx);
-        } else {
-          globalData.buttons[idx].fnId = fnId;
-          sendGlobalButton(idx);
-        }
-        renderGlobalControls();
-      });
-    });
+  attachFnmListeners(grid, (ctrl, idx, fnId) => {
+    if (ctrl === 'genc') {
+      globalData.encoders[idx].fnId = fnId;
+      sendGlobalEncoder(idx);
+    } else {
+      globalData.buttons[idx].fnId = fnId;
+      sendGlobalButton(idx);
+    }
+    renderGlobalControls();
   });
 }
 
