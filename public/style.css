@@ -555,6 +555,22 @@ button.danger:hover { background: #300; }
   height: var(--ctrl-height);
 }
 
+.ctrl-fn-select {
+  background: #000;
+  border: 1px solid var(--border-input);
+  color: var(--text-input);
+  padding: 0 6px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: inherit;
+  width: 170px;
+  height: var(--ctrl-height);
+}
+.ctrl-fn-select:focus {
+  border-color: #fff;
+  outline: none;
+}
+
 .ctrl-type-fixed {
   font-size: 14px;
   color: #eee;
