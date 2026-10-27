@@ -109,17 +109,24 @@ function noteSelectHtml(midi, idx, ctrl = "btn") {
          `<select data-ctrl="${ctrl}" data-idx="${idx}" data-field="note-oct" class="ctrl-oct">${octOpts}</select>`;
 }
 
-function fnSelectHtml(ctrl, idx, table, currentFnId) {
-  const groups = [...new Set(table.map(f => f.group))];
-  let opts = '';
-  for (const g of groups) {
-    opts += `<optgroup label="${g}">`;
-    for (const fn of table.filter(f => f.group === g)) {
-      opts += `<option value="${fn.id}" ${fn.id === currentFnId ? 'selected' : ''}>${fn.label}</option>`;
-    }
-    opts += `</optgroup>`;
+function fnMenuHtml(ctrl, idx, table, currentFnId) {
+  const entry = table.find(f => f.id === currentFnId);
+  const label = entry ? entry.label : '—';
+  const groups = {};
+  for (const f of table) (groups[f.group] = groups[f.group] || []).push(f);
+  let inner = '';
+  for (const [g, items] of Object.entries(groups)) {
+    inner += `<div class="fnm-group">
+      <div class="fnm-group-hdr">${g}<span class="fnm-arr">▸</span></div>
+      <div class="fnm-sub">${items.map(f =>
+        `<div class="fnm-item" data-value="${f.id}">${f.label}</div>`
+      ).join('')}</div>
+    </div>`;
   }
-  return `<select data-ctrl="${ctrl}" data-idx="${idx}" data-field="fn" class="ctrl-fn-select">${opts}</select>`;
+  return `<div class="fnm" data-ctrl="${ctrl}" data-idx="${idx}">
+    <button class="fnm-trigger" type="button">${label} <span class="fnm-caret">▾</span></button>
+    <div class="fnm-dropdown" style="display:none">${inner}</div>
+  </div>`;
 }
 
 for (let p = 0; p < 24; p++) {
@@ -737,13 +744,13 @@ function renderGlobalControls() {
       <div class="ctrl-section">
         <div class="ctrl-section-label">TURN</div>
         <div class="ctrl-fields">
-          ${fnSelectHtml("genc", i, ENCODER_FUNCTION_TABLE, globalData.encoders[i].fnId)}
+          ${fnMenuHtml("genc", i, ENCODER_FUNCTION_TABLE, globalData.encoders[i].fnId)}
         </div>
       </div>
       <div class="ctrl-section ctrl-section-push">
         <div class="ctrl-section-label">PUSH</div>
         <div class="ctrl-fields">
-          ${fnSelectHtml("gbtn", i, BUTTON_FUNCTION_TABLE, globalData.buttons[i].fnId)}
+          ${fnMenuHtml("gbtn", i, BUTTON_FUNCTION_TABLE, globalData.buttons[i].fnId)}
         </div>
       </div>
     `;
@@ -752,21 +759,34 @@ function renderGlobalControls() {
 
   container.appendChild(grid);
 
-  grid.querySelectorAll("select").forEach(el => {
-    el.addEventListener("change", onGlobalControlChange);
+  grid.querySelectorAll('.fnm').forEach(menu => {
+    const dropdown = menu.querySelector('.fnm-dropdown');
+    menu.querySelector('.fnm-trigger').addEventListener('click', e => {
+      e.stopPropagation();
+      const wasOpen = dropdown.style.display === 'block';
+      document.querySelectorAll('.fnm-dropdown').forEach(d => { d.style.display = 'none'; });
+      dropdown.style.display = wasOpen ? 'none' : 'block';
+    });
+    menu.querySelectorAll('.fnm-item').forEach(item => {
+      item.addEventListener('click', e => {
+        e.stopPropagation();
+        dropdown.style.display = 'none';
+        const ctrl = menu.dataset.ctrl;
+        const idx  = parseInt(menu.dataset.idx);
+        const fnId = parseInt(item.dataset.value);
+        if (ctrl === 'genc') {
+          globalData.encoders[idx].fnId = fnId;
+          sendGlobalEncoder(idx);
+        } else {
+          globalData.buttons[idx].fnId = fnId;
+          sendGlobalButton(idx);
+        }
+        renderGlobalControls();
+      });
+    });
   });
 }
 
-function onGlobalControlChange(e) {
-  const el = e.target;
-  const ctrl = el.dataset.ctrl;
-  const idx = parseInt(el.dataset.idx);
-
-  if (ctrl === "genc") {
-    globalData.encoders[idx].fnId = parseInt(el.value);
-    sendGlobalEncoder(idx);
-  } else if (ctrl === "gbtn") {
-    globalData.buttons[idx].fnId = parseInt(el.value);
-    sendGlobalButton(idx);
-  }
-}
+document.addEventListener('click', () => {
+  document.querySelectorAll('.fnm-dropdown').forEach(d => { d.style.display = 'none'; });
+});
