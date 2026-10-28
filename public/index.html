@@ -50,12 +50,16 @@
             <option value="3600">60 min</option>
             <option value="7200">120 min</option>
           </select>
+          <button id="serial-log-toggle">Log</button>
         </div>
       </div>
       <div id="fw-update-banner" class="hidden">
         <span id="fw-update-text"></span>
         <a id="fw-update-download" href="#" download>Download update</a>
         <span id="fw-update-instructions">Hold Shift, plug in the USB cable, then drag and drop the .uf2 file onto the RPI-RP2 drive.</span>
+      </div>
+      <div id="script-update-banner" class="hidden">
+        <span>The Ableton script is outdated. Please update it to match the firmware version.</span>
       </div>
       <div id="controller-config">
         <div class="ctrl-layout">
@@ -92,6 +96,15 @@
       </div>
       <pre id="changelog-text">Loading…</pre>
     </div>
+  </div>
+
+  <div id="serial-log-panel" class="hidden">
+    <div id="serial-log-header">
+      <span>Serial Log</span>
+      <button id="serial-log-clear">Clear</button>
+      <button id="serial-log-close">✕</button>
+    </div>
+    <div id="serial-log-output"></div>
   </div>
 
   <div id="modal-overlay" class="hidden">

@@ -1,66 +1,124 @@
 const BUTTON_FUNCTION_TABLE = [
-  { id: 1,  label: 'Play',               group: 'Transport' },
-  { id: 2,  label: 'Stop',               group: 'Transport' },
-  { id: 3,  label: 'Loop Toggle',        group: 'Transport' },
-  { id: 4,  label: 'Continue',           group: 'Transport' },
-  { id: 5,  label: 'Arr. Record',        group: 'Transport' },
-  { id: 6,  label: 'Undo',              group: 'Transport' },
-  { id: 7,  label: 'Redo',              group: 'Transport' },
-  { id: 8,  label: 'Tempo +1',          group: 'Transport' },
-  { id: 9,  label: 'Tempo -1',          group: 'Transport' },
-  { id: 26, label: 'Restart',           group: 'Transport' },
-  { id: 27, label: 'Capture MIDI',      group: 'Transport' },
-  { id: 28, label: 'Re-enable Auto.',   group: 'Transport' },
-  { id: 31, label: 'Metronome',         group: 'Transport' },
-  { id: 32, label: 'Back to Arr.',      group: 'Transport' },
-  { id: 33, label: 'Skip Forward',      group: 'Transport' },
-  { id: 34, label: 'Skip Backward',     group: 'Transport' },
-  { id: 14, label: 'Launch Scene',      group: 'Session' },
-  { id: 15, label: 'Prev Scene',        group: 'Session' },
-  { id: 16, label: 'Next Scene',        group: 'Session' },
-  { id: 17, label: 'Session Record',    group: 'Session' },
-  { id: 40, label: 'Stop All Clips',    group: 'Session' },
-  { id: 43, label: 'Prev Track',        group: 'Session' },
-  { id: 44, label: 'Next Track',        group: 'Session' },
-  { id: 18, label: 'Prev Marker',       group: 'Arrangement' },
-  { id: 19, label: 'Next Marker',       group: 'Arrangement' },
-  { id: 48, label: 'Prev Device',       group: 'Device' },
-  { id: 49, label: 'Next Device',       group: 'Device' },
-  { id: 50, label: 'Prev Variation',    group: 'Device' },
-  { id: 51, label: 'Next Variation',    group: 'Device' },
-  { id: 52, label: 'Launch Variation',  group: 'Device' },
-  { id: 53, label: 'Store Variation',   group: 'Device' },
-  { id: 54, label: 'Randomize',        group: 'Device' },
+  // Global
+  { id:  1, label: 'Play',              group: 'Global' },
+  { id:  2, label: 'Stop',              group: 'Global' },
+  { id:  3, label: 'Undo',              group: 'Global' },
+  { id:  4, label: 'Redo',              group: 'Global' },
+  { id:  5, label: 'Tempo +1',          group: 'Global' },
+  { id:  6, label: 'Tempo -1',          group: 'Global' },
+  { id:  7, label: 'Capture MIDI',      group: 'Global' },
+  { id:  8, label: 'Re-enable Auto.',   group: 'Global' },
+  { id:  9, label: 'Metronome',         group: 'Global' },
+  // Arrangement
+  { id: 10, label: 'Arr. Loop',         group: 'Arrangement' },
+  { id: 11, label: 'Continue',          group: 'Arrangement' },
+  { id: 12, label: 'Restart',           group: 'Arrangement' },
+  { id: 13, label: 'Back to Arr.',      group: 'Arrangement' },
+  { id: 14, label: 'Arr. Record',       group: 'Arrangement' },
+  { id: 15, label: 'Marker -',          group: 'Arrangement' },
+  { id: 16, label: 'Marker +',          group: 'Arrangement' },
+  { id: 17, label: 'Skip Forward',      group: 'Arrangement' },
+  { id: 18, label: 'Skip Backward',     group: 'Arrangement' },
+  // Session
+  { id: 19, label: 'Launch Scene',      group: 'Session' },
+  { id: 20, label: 'Scene +',           group: 'Session' },
+  { id: 21, label: 'Scene -',           group: 'Session' },
+  { id: 22, label: 'Session Record',    group: 'Session' },
+  { id: 23, label: 'Stop All Clips',    group: 'Session' },
+  // Navigation
+  { id: 24, label: 'Track -',           group: 'Navigation' },
+  { id: 25, label: 'Track +',           group: 'Navigation' },
+  { id: 26, label: 'Device -',          group: 'Navigation' },
+  { id: 27, label: 'Device +',          group: 'Navigation' },
+  { id: 28, label: 'Bank -',            group: 'Navigation' },
+  { id: 29, label: 'Bank +',            group: 'Navigation' },
+  { id: 30, label: 'Preset -',          group: 'Navigation' },
+  { id: 31, label: 'Preset +',          group: 'Navigation' },
+  // Track / Device
+  { id: 32, label: 'Mute',              group: 'Track' },
+  { id: 33, label: 'Solo',              group: 'Track' },
+  { id: 34, label: 'Arm',               group: 'Track' },
+  { id: 35, label: 'Return to Default', group: 'Track' },
+  { id: 36, label: 'Prev Variation',    group: 'Device' },
+  { id: 37, label: 'Next Variation',    group: 'Device' },
+  { id: 38, label: 'Launch Variation',  group: 'Device' },
+  { id: 39, label: 'Store Variation',   group: 'Device' },
+  { id: 40, label: 'Randomize',         group: 'Device' },
 ];
 
 const ENCODER_FUNCTION_TABLE = [
-  { id: 73,  label: 'Last Selected Param', group: 'Global' },
-  { id: 37,  label: 'Global Groove',       group: 'Global' },
-  { id: 89,  label: 'Master Volume',       group: 'Global' },
-  { id: 90,  label: 'Cue Volume',          group: 'Global' },
-  { id: 87,  label: 'BPM',               group: 'Global' },
-  { id: 112, label: 'Track Select',        group: 'Global' },
-  { id: 91,  label: 'Track Volume',        group: 'Selected Track' },
-  { id: 96,  label: 'Track Pan',           group: 'Selected Track' },
-  { id: 59,  label: 'Send A',              group: 'Selected Track' },
-  { id: 60,  label: 'Send B',              group: 'Selected Track' },
-  { id: 86,  label: 'Scroll Scenes',       group: 'Session' },
-  { id: 83,  label: 'Skip Fwd/Bwd',        group: 'Arrangement' },
-  { id: 84,  label: 'Loop Position',       group: 'Arrangement' },
-  { id: 85,  label: 'Loop Length',         group: 'Arrangement' },
-  { id: 88,  label: 'Jump Marker',         group: 'Arrangement' },
-  { id: 99,  label: 'Horizontal Zoom',     group: 'Arrangement' },
+  // Mixer / Global
+  { id: 48, label: 'Master Volume',     group: 'Global' },
+  { id: 49, label: 'Cue Volume',        group: 'Global' },
+  { id: 50, label: 'BPM',               group: 'Global' },
+  { id: 51, label: 'Scroll Scenes',     group: 'Global' },
+  { id: 52, label: 'Track Volume',      group: 'Track' },
+  { id: 53, label: 'Track Pan',         group: 'Track' },
+  { id: 54, label: 'Song Position',     group: 'Arrangement' },
+  { id: 55, label: 'Selected Param',    group: 'Global' },
+  { id: 56, label: 'Groove',            group: 'Global' },
+  { id: 57, label: 'Track Select',      group: 'Track' },
+  { id: 58, label: 'Select Preset',     group: 'Navigation' },
+  { id: 59, label: 'Loop Position',     group: 'Arrangement' },
+  { id: 60, label: 'Loop Length',       group: 'Arrangement' },
+  { id: 61, label: 'H. Zoom',           group: 'Arrangement' },
+  { id: 62, label: 'Jump Marker',       group: 'Arrangement' },
+  // Sends A-L
+  { id: 64, label: 'Send A',            group: 'Sends' },
+  { id: 65, label: 'Send B',            group: 'Sends' },
+  { id: 66, label: 'Send C',            group: 'Sends' },
+  { id: 67, label: 'Send D',            group: 'Sends' },
+  { id: 68, label: 'Send E',            group: 'Sends' },
+  { id: 69, label: 'Send F',            group: 'Sends' },
+  { id: 70, label: 'Send G',            group: 'Sends' },
+  { id: 71, label: 'Send H',            group: 'Sends' },
+  { id: 72, label: 'Send I',            group: 'Sends' },
+  { id: 73, label: 'Send J',            group: 'Sends' },
+  { id: 74, label: 'Send K',            group: 'Sends' },
+  { id: 75, label: 'Send L',            group: 'Sends' },
+  // Device Params 1-32
+  ...Array.from({ length: 32 }, (_, i) => ({ id: 80 + i, label: `Param ${i + 1}`, group: 'Device' })),
 ];
 
 let serialPort = null;
 let serialWriter = null;
 let serialReader = null;
 
+let serialLogBuf = "";
+const SERIAL_LOG_MAX = 500;
+
+function appendLogLine(text, color) {
+  const el = document.getElementById("serial-log-output");
+  if (!el) return;
+  const div = document.createElement("div");
+  if (color) div.style.color = color;
+  div.textContent = text;
+  el.appendChild(div);
+  while (el.children.length > SERIAL_LOG_MAX) el.removeChild(el.firstChild);
+  el.scrollTop = el.scrollHeight;
+}
+
+function logSerialByte(b) {
+  if (b === 0x0A) {
+    const line = serialLogBuf.replace(/\r$/, "");
+    serialLogBuf = "";
+    if (line.length === 0) return;
+    appendLogLine(line, "#4c4");
+  } else if (b !== 0x0D) {
+    serialLogBuf += String.fromCharCode(b);
+  }
+}
+
+function hexStr(bytes) {
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, "0").toUpperCase()).join(" ");
+}
+
 const FW_REPO = "kblivesolutions/param8-firmware";
 const FW_BRANCH = "main";
 const FW_MANIFEST_URL = `https://raw.githubusercontent.com/${FW_REPO}/${FW_BRANCH}/manifest.json`;
 
 let currentFirmwareVersion = null;
+let currentScriptVersion = null;
 let latestFirmwareInfo = null;
 let currentPreset = 0;
 let presetData = [];
@@ -157,13 +215,13 @@ function attachFnmListeners(container, onItemSelect) {
 for (let p = 0; p < 24; p++) {
   presetData[p] = { encoders: [], buttons: [], presetName: "" };
   for (let i = 0; i < 8; i++) {
-    presetData[p].encoders[i] = { type: 0, number: 0, channel: 0, min: 0, max: 127, name: "", isFunction: false, fnId: 73 };
+    presetData[p].encoders[i] = { type: 0, number: 0, channel: 0, min: 0, max: 127, name: "", isFunction: false, fnId: 55};
     presetData[p].buttons[i]  = { type: 0, number: 0, channel: 0, toggle: false, min: 0, max: 127, name: "", isFunction: false, fnId: 1 };
   }
 }
 
 let globalData = {
-  encoders: Array.from({ length: 8 }, () => ({ fnId: 73 })),
+  encoders: Array.from({ length: 8 }, () => ({ fnId: 55})),
   buttons:  Array.from({ length: 8 }, () => ({ fnId: 1 })),
 };
 
@@ -174,6 +232,9 @@ function setDisconnectedUI() {
   document.getElementById("midi-connected-options").classList.add("hidden");
   document.getElementById("midi-connect").classList.remove("hidden");
   document.getElementById("midi-disconnect").classList.add("hidden");
+  currentScriptVersion = null;
+  updateScriptVersionUI();
+  document.getElementById("serial-log-panel").classList.add("hidden");
 }
 
 async function disconnectSerial() {
@@ -251,8 +312,11 @@ async function readSerialLoop() {
           buf.push(b);
           if (b === 0xF7) {
             inSysEx = false;
+            appendLogLine(`← ${hexStr(buf)}`, "#48f");
             onMessage(new Uint8Array(buf));
           }
+        } else {
+          logSerialByte(b);
         }
       }
     }
@@ -266,6 +330,7 @@ async function readSerialLoop() {
 
 async function serialSend(bytes) {
   if (!serialWriter) return;
+  appendLogLine(`→ ${hexStr(bytes)}`, "#fa0");
   await serialWriter.write(new Uint8Array(bytes));
 }
 
@@ -322,6 +387,17 @@ function updateFirmwareVersionUI() {
   banner.classList.add("hidden");
 }
 
+function updateScriptVersionUI() {
+  const banner = document.getElementById("script-update-banner");
+  if (!banner) return;
+  if (currentFirmwareVersion && currentScriptVersion &&
+      compareVersions(currentFirmwareVersion, currentScriptVersion) > 0) {
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
 function onMessage(d) {
   if (d[0] !== 0xf0 || d[1] !== 0x6f) return;
   const status = d[2];
@@ -330,6 +406,13 @@ function onMessage(d) {
   if (status === 0x14) {
     currentFirmwareVersion = `${d[3]}.${d[4]}.${d[5]}`;
     updateFirmwareVersionUI();
+    updateScriptVersionUI();
+    return;
+  }
+
+  if (status === 0x23) {
+    currentScriptVersion = `${d[3]}.${d[4]}.${d[5]}`;
+    updateScriptVersionUI();
     return;
   }
 
@@ -403,7 +486,7 @@ function onMessage(d) {
       max: d.length > 10 ? d[10] : 127,
       name: presetData[preset].encoders[idx].name || "",
       isFunction: d.length > 11 ? d[11] === 1 : false,
-      fnId:       d.length > 12 ? d[12] : 73,
+      fnId:       d.length > 12 ? d[12] : 55,
     };
   } else if (status === 0x0d) {
     presetData[preset].buttons[idx] = {
@@ -723,7 +806,10 @@ function initControllerUI() {
       btn.classList.add("active");
       document.querySelectorAll(".mode-section").forEach((s) => s.classList.add("hidden"));
       document.getElementById("mode-" + btn.dataset.mode).classList.remove("hidden");
-      if (btn.dataset.mode === "global") renderGlobalControls();
+      if (btn.dataset.mode === "global") {
+        requestGlobal();
+        renderGlobalControls();
+      }
     });
   });
 
@@ -749,6 +835,18 @@ function initControllerUI() {
   presetNameInput.addEventListener("change", () => {
     presetData[currentPreset].presetName = presetNameInput.value;
     sendPresetName(currentPreset, presetNameInput.value);
+  });
+
+  document.getElementById("serial-log-toggle").addEventListener("click", () => {
+    document.getElementById("serial-log-panel").classList.toggle("hidden");
+  });
+  document.getElementById("serial-log-close").addEventListener("click", () => {
+    document.getElementById("serial-log-panel").classList.add("hidden");
+  });
+  document.getElementById("serial-log-clear").addEventListener("click", () => {
+    const el = document.getElementById("serial-log-output");
+    if (el) el.innerHTML = "";
+    serialLogBuf = "";
   });
 
   document.getElementById("ctrl-save").addEventListener("click", savePresetToFile);
@@ -786,7 +884,7 @@ function sendBrightness(value) {
 }
 
 function requestGlobal() {
-  serialSend([0xf0, 0x6f, 0x1e, 0xf7]);
+  serialSend([0xf0, 0x6f, 0x1e, 0x00, 0xf7]);
 }
 
 function sendGlobalEncoder(idx) {
