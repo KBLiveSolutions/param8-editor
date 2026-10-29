@@ -1,0 +1,131 @@
+<style>
+  html { zoom: 0.82; }
+</style>
+<script>
+(function () {
+  'use strict';
+
+  var wsUrl = 'ws://' + location.host;
+  var ws = null;
+  var wsOpen = false;
+  var wsConnectPromise = null;
+  var readListeners = [];
+
+  function wsConnect() {
+    if (ws && wsOpen) return Promise.resolve();
+    if (wsConnectPromise) return wsConnectPromise;
+    wsConnectPromise = new Promise(function (resolve) {
+      ws = new WebSocket(wsUrl);
+      ws.addEventListener('open', function () { wsOpen = true; wsConnectPromise = null; resolve(); });
+      ws.addEventListener('close', function () { wsOpen = false; ws = null; wsConnectPromise = null; });
+      ws.addEventListener('message', function (e) {
+        try {
+          var msg = JSON.parse(e.data);
+          if (msg.type === 'data') {
+            var bytes = new Uint8Array(msg.bytes);
+            readListeners.forEach(function (l) { l(bytes); });
+          }
+        } catch (_) {}
+      });
+    });
+    return wsConnectPromise;
+  }
+
+  function wsSend(msg) {
+    if (ws && wsOpen) ws.send(JSON.stringify(msg));
+  }
+
+  // ── Populate the port <select> in the editor UI ──────────────────────────────
+  function populatePortSelect() {
+    fetch('/api/ports')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var sel = document.getElementById('port-select');
+        if (!sel) return;
+        var ports = data.ports || [];
+        sel.innerHTML = ports.length
+          ? ports.map(function (p) {
+              var label = p.replace('/dev/cu.', '').replace('/dev/tty.', '');
+              return '<option value="' + p + '">' + label + '</option>';
+            }).join('')
+          : '<option value="">No devices found</option>';
+        sel.classList.remove('hidden');
+      })
+      .catch(function () {});
+  }
+
+  function MockSerialPort(portPath) { this._path = portPath; }
+
+  MockSerialPort.prototype.open = function (opts) {
+    var baud = (opts && opts.baudRate) ? opts.baudRate : 115200;
+    var self = this;
+    return wsConnect().then(function () {
+      return new Promise(function (resolve, reject) {
+        function handler(e) {
+          try {
+            var msg = JSON.parse(e.data);
+            if (msg.type === 'opened')    { ws.removeEventListener('message', handler); resolve(); }
+            if (msg.type === 'openError') { ws.removeEventListener('message', handler); reject(new Error(msg.error)); }
+          } catch (_) {}
+        }
+        ws.addEventListener('message', handler);
+        wsSend({ cmd: 'open', path: self._path, baud: baud });
+      });
+    });
+  };
+
+  MockSerialPort.prototype.close = function () {
+    wsSend({ cmd: 'close' });
+    return Promise.resolve();
+  };
+
+  Object.defineProperty(MockSerialPort.prototype, 'readable', {
+    get: function () {
+      var listener;
+      return new ReadableStream({
+        start: function (controller) {
+          listener = function (bytes) { controller.enqueue(bytes); };
+          readListeners.push(listener);
+        },
+        cancel: function () {
+          var idx = readListeners.indexOf(listener);
+          if (idx >= 0) readListeners.splice(idx, 1);
+        }
+      });
+    }
+  });
+
+  Object.defineProperty(MockSerialPort.prototype, 'writable', {
+    get: function () {
+      return new WritableStream({
+        write: function (chunk) { wsSend({ cmd: 'write', bytes: Array.from(chunk) }); }
+      });
+    }
+  });
+
+  MockSerialPort.prototype.getInfo = function () {
+    return { usbVendorId: 0x2e8a, usbProductId: 0x000a };
+  };
+
+  Object.defineProperty(navigator, 'serial', {
+    value: {
+      getPorts: function () { return Promise.resolve([]); },
+      requestPort: function () {
+        var sel = document.getElementById('port-select');
+        var path = sel && sel.value;
+        if (!path) return Promise.reject(new DOMException('No port selected', 'NotFoundError'));
+        return Promise.resolve(new MockSerialPort(path));
+      }
+    },
+    configurable: true,
+    writable: true
+  });
+
+  wsConnect();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', populatePortSelect);
+  } else {
+    populatePortSelect();
+  }
+})();
+</script>

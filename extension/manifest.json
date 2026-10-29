@@ -1,0 +1,7 @@
+{
+    "name": "param8 Editor",
+    "author": "KBLiveSolutions",
+    "entry": "dist/extension.js",
+    "version": "0.1.0",
+    "minimumApiVersion": "1.0.0"
+}

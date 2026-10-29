@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>param8 Extension POC</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    body { background: #1c1c1c; color: #ccc; font-family: -apple-system, monospace; font-size: 12px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    h1 { color: #fff; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; }
+    .row { display: flex; align-items: center; gap: 8px; padding: 7px 11px; border-radius: 3px; font-size: 12px; }
+    .ok   { background:#1a3a1a; color:#66bb6a; border:1px solid #2d5a2d; }
+    .fail { background:#3a1a1a; color:#ef5350; border:1px solid #5a2d2d; }
+    .info { background:#1a1a3a; color:#64b5f6; border:1px solid #2d2d5a; }
+    .dot  { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .dot-ok{background:#66bb6a}.dot-fail{background:#ef5350}.dot-info{background:#64b5f6}
+    .section { display:flex; flex-direction:column; gap:6px; }
+    .section-title { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#666; }
+    .controls { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+    select, button, input { background:#222; color:#ccc; border:1px solid #444; padding:4px 10px; border-radius:3px; font-size:12px; cursor:pointer; }
+    select { flex:1; min-width:180px; }
+    button:hover { background:#333; color:#fff; }
+    button:disabled { opacity:.4; cursor:default; }
+    #log { background:#0a0a0a; border:1px solid #2a2a2a; padding:10px; border-radius:3px; height:120px; overflow-y:auto; font-size:11px; line-height:1.7; white-space:pre-wrap; }
+  </style>
+</head>
+<body>
+  <h1>param8 — Extension POC v2</h1>
+
+  <div class="section">
+    <div class="section-title">Node.js bridge</div>
+    <div id="r-node"   class="row info"><div class="dot dot-info"></div><span>Node.js: checking…</span></div>
+    <div id="r-cp"     class="row info"><div class="dot dot-info"></div><span>child_process: checking…</span></div>
+    <div id="r-stty"   class="row info"><div class="dot dot-info"></div><span>stty: checking…</span></div>
+    <div id="r-ws"     class="row info"><div class="dot dot-info"></div><span>WebSocket: checking…</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Serial port</div>
+    <div class="controls">
+      <select id="port-select"><option value="">— refresh to list ports —</option></select>
+      <button id="btn-refresh">Refresh</button>
+      <button id="btn-open" disabled>Open 115200</button>
+      <button id="btn-close" disabled>Close</button>
+    </div>
+    <div id="r-serial" class="row fail"><div class="dot dot-fail"></div><span>Not connected</span></div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Log</div>
+    <div id="log">Starting…</div>
+  </div>
+
+  <script>
+    const BASE = location.origin;
+    let ws = null;
+
+    function log(msg) {
+      const el = document.getElementById('log');
+      el.textContent += '\n' + msg;
+      el.scrollTop = el.scrollHeight;
+    }
+    function setRow(id, state, text) {
+      const el = document.getElementById(id);
+      el.className = 'row ' + state;
+      el.querySelector('.dot').className = 'dot dot-' + state;
+      el.querySelector('span').textContent = text;
+    }
+
+    // ── Check Node.js bridge status ──────────────────────────────────────────
+    async function checkStatus() {
+      try {
+        const r = await fetch(BASE + '/api/status');
+        const s = await r.json();
+        setRow('r-node', 'ok',   `Node.js ${s.node} (${s.platform}) ✓`);
+        setRow('r-cp',   s.childProcess ? 'ok' : 'fail', `child_process: ${s.childProcess ? 'OK ✓' : 'BLOCKED ✗'}`);
+        setRow('r-stty', s.stty ? 'ok' : 'fail', `stty: ${s.stty ? 'available ✓' : 'not found ✗'}`);
+        log('Status: ' + JSON.stringify(s));
+      } catch(e) {
+        setRow('r-node', 'fail', 'Bridge unreachable: ' + e);
+      }
+    }
+
+    // ── WebSocket ────────────────────────────────────────────────────────────
+    function connectWs() {
+      const url = 'ws://' + location.host;
+      ws = new WebSocket(url);
+      ws.onopen  = () => setRow('r-ws', 'ok',   'WebSocket: connected ✓');
+      ws.onclose = () => { setRow('r-ws', 'fail', 'WebSocket: closed'); ws = null; };
+      ws.onerror = () => setRow('r-ws', 'fail', 'WebSocket: error ✗');
+      ws.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'data') {
+            const hex = msg.bytes.map(b => b.toString(16).padStart(2,'0')).join(' ');
+            log('RX: ' + hex);
+          }
+        } catch { log('WS raw: ' + e.data); }
+      };
+    }
+
+    // ── Port list ────────────────────────────────────────────────────────────
+    async function refreshPorts() {
+      const r = await fetch(BASE + '/api/ports');
+      const { ports } = await r.json();
+      const sel = document.getElementById('port-select');
+      sel.innerHTML = ports.length
+        ? ports.map(p => `<option value="${p}">${p}</option>`).join('')
+        : '<option value="">— no USB serial ports found —</option>';
+      document.getElementById('btn-open').disabled = !ports.length;
+      log('Ports: ' + (ports.length ? ports.join(', ') : 'none found'));
+    }
+
+    // ── Open / Close ─────────────────────────────────────────────────────────
+    document.getElementById('btn-refresh').addEventListener('click', refreshPorts);
+
+    document.getElementById('btn-open').addEventListener('click', async () => {
+      const path = document.getElementById('port-select').value;
+      if (!path) return;
+      const r = await fetch(BASE + '/api/open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, baud: 115200 })
+      });
+      const { ok, error } = await r.json();
+      if (ok) {
+        setRow('r-serial', 'ok', `Connected: ${path} @ 115200 ✓`);
+        document.getElementById('btn-open').disabled = true;
+        document.getElementById('btn-close').disabled = false;
+        log(`Opened ${path}`);
+      } else {
+        setRow('r-serial', 'fail', 'Error: ' + error);
+        log('Open error: ' + error);
+      }
+    });
+
+    document.getElementById('btn-close').addEventListener('click', async () => {
+      await fetch(BASE + '/api/close', { method: 'POST' });
+      setRow('r-serial', 'fail', 'Not connected');
+      document.getElementById('btn-open').disabled = false;
+      document.getElementById('btn-close').disabled = true;
+      log('Port closed');
+    });
+
+    // ── Init ─────────────────────────────────────────────────────────────────
+    checkStatus();
+    connectWs();
+    refreshPorts();
+  </script>
+</body>
+</html>
