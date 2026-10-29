@@ -1,5 +1,10 @@
 {
   "name": "param8-editor-workspace",
   "private": true,
-  "workspaces": ["editor", "extension"]
+  "workspaces": ["editor", "extension"],
+  "scripts": {
+    "editor": "npm start --workspace=editor",
+    "extension:build": "npm run build --workspace=extension",
+    "extension:dev": "npm run start --workspace=extension"
+  }
 }
