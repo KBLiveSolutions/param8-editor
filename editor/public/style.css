@@ -647,9 +647,7 @@ button.danger:hover { background: #300; }
 
 .fnm-sub {
   display: none;
-  position: absolute;
-  left: 100%;
-  top: 0;
+  position: fixed;
   background: #1c1c1c;
   border: 1px solid #555;
   border-radius: var(--radius);
@@ -658,7 +656,17 @@ button.danger:hover { background: #300; }
   padding: 3px 0;
   z-index: 201;
 }
-.fnm-group:hover .fnm-sub { display: block; }
+/* submenu display managed by JS */
+
+.fnm-nested > .fnm-group-hdr {
+  font-size: 11px;
+  font-weight: 400;
+  color: #999;
+  letter-spacing: 0.4px;
+  text-transform: none;
+  padding: 5px 10px;
+}
+.fnm-nested:hover > .fnm-group-hdr { background: #2a2a2a; color: #fff; }
 
 .fnm-item {
   padding: 5px 10px;

@@ -1,6 +1,6 @@
 const BUTTON_FUNCTION_TABLE = [
   // Global
-  { id:  1, label: 'Play',              group: 'Global' },
+  { id: 52, label: 'Play',              group: 'Global' },
   { id:  2, label: 'Stop',              group: 'Global' },
   { id:  3, label: 'Undo',              group: 'Global' },
   { id:  4, label: 'Redo',              group: 'Global' },
@@ -8,9 +8,9 @@ const BUTTON_FUNCTION_TABLE = [
   { id:  6, label: 'Tempo -1',          group: 'Global' },
   { id:  7, label: 'Capture MIDI',      group: 'Global' },
   { id:  8, label: 'Re-enable Auto.',   group: 'Global' },
-  { id:  9, label: 'Metronome',         group: 'Global' },
+  { id: 50, label: 'Metronome',         group: 'Global' },
   // Arrangement
-  { id: 10, label: 'Arr. Loop',         group: 'Arrangement' },
+  { id: 56, label: 'Arr. Loop',         group: 'Arrangement' },
   { id: 11, label: 'Continue',          group: 'Arrangement' },
   { id: 12, label: 'Restart',           group: 'Arrangement' },
   { id: 13, label: 'Back to Arr.',      group: 'Arrangement' },
@@ -20,25 +20,25 @@ const BUTTON_FUNCTION_TABLE = [
   { id: 17, label: 'Skip Forward',      group: 'Arrangement' },
   { id: 18, label: 'Skip Backward',     group: 'Arrangement' },
   // Session
-  { id: 19, label: 'Launch Scene',      group: 'Session' },
-  { id: 20, label: 'Scene +',           group: 'Session' },
-  { id: 21, label: 'Scene -',           group: 'Session' },
+  { id: 53, label: 'Launch Scene',      group: 'Session' },
+  { id: 48, label: 'Scene +',           group: 'Session' },
+  { id: 49, label: 'Scene -',           group: 'Session' },
   { id: 22, label: 'Session Record',    group: 'Session' },
   { id: 23, label: 'Stop All Clips',    group: 'Session' },
-  // Navigation
-  { id: 24, label: 'Track -',           group: 'Navigation' },
-  { id: 25, label: 'Track +',           group: 'Navigation' },
-  { id: 26, label: 'Device -',          group: 'Navigation' },
-  { id: 27, label: 'Device +',          group: 'Navigation' },
-  { id: 28, label: 'Bank -',            group: 'Navigation' },
-  { id: 29, label: 'Bank +',            group: 'Navigation' },
+  // Navigation (fnIds match CCs expected by component layers)
+  { id: 20, label: 'Track -',           group: 'Navigation' },
+  { id: 21, label: 'Track +',           group: 'Navigation' },
+  { id: 24, label: 'Device -',          group: 'Navigation' },
+  { id: 25, label: 'Device +',          group: 'Navigation' },
+  { id: 26, label: 'Bank -',            group: 'Navigation' },
+  { id: 27, label: 'Bank +',            group: 'Navigation' },
   { id: 30, label: 'Preset -',          group: 'Navigation' },
   { id: 31, label: 'Preset +',          group: 'Navigation' },
   // Track / Device
-  { id: 32, label: 'Mute',              group: 'Track' },
-  { id: 33, label: 'Solo',              group: 'Track' },
-  { id: 34, label: 'Arm',               group: 'Track' },
-  { id: 35, label: 'Return to Default', group: 'Track' },
+  { id: 54, label: 'Mute',              group: 'Selected Track' },
+  { id: 55, label: 'Solo',              group: 'Selected Track' },
+  { id: 51, label: 'Arm',               group: 'Selected Track' },
+  { id: 57, label: 'Return to Default', group: 'Selected Track' },
   { id: 36, label: 'Prev Variation',    group: 'Device' },
   { id: 37, label: 'Next Variation',    group: 'Device' },
   { id: 38, label: 'Launch Variation',  group: 'Device' },
@@ -47,37 +47,37 @@ const BUTTON_FUNCTION_TABLE = [
 ];
 
 const ENCODER_FUNCTION_TABLE = [
-  // Mixer / Global
-  { id: 48, label: 'Master Volume',     group: 'Global' },
-  { id: 49, label: 'Cue Volume',        group: 'Global' },
-  { id: 50, label: 'BPM',               group: 'Global' },
-  { id: 51, label: 'Scroll Scenes',     group: 'Global' },
-  { id: 52, label: 'Track Volume',      group: 'Track' },
-  { id: 53, label: 'Track Pan',         group: 'Track' },
-  { id: 54, label: 'Song Position',     group: 'Arrangement' },
-  { id: 55, label: 'Selected Param',    group: 'Global' },
+  // Mixer / Global (ids = CCs expected by MixerComponent layer)
+  { id: 40, label: 'Master Volume',     group: 'Global' },
+  { id: 41, label: 'Cue Volume',        group: 'Global' },
+  { id: 42, label: 'BPM',               group: 'Global' },
+  { id: 43, label: 'Scroll Scenes',     group: 'Global' },
+  { id: 44, label: 'Track Volume',      group: 'Selected Track' },
+  { id: 45, label: 'Track Pan',         group: 'Selected Track' },
+  { id: 46, label: 'Song Position',     group: 'Arrangement' },
+  { id: 47, label: 'Selected Param',    group: 'Global' },
   { id: 56, label: 'Groove',            group: 'Global' },
-  { id: 57, label: 'Track Select',      group: 'Track' },
+  { id: 57, label: 'Track Select',      group: 'Selected Track' },
   { id: 58, label: 'Select Preset',     group: 'Navigation' },
   { id: 59, label: 'Loop Position',     group: 'Arrangement' },
   { id: 60, label: 'Loop Length',       group: 'Arrangement' },
   { id: 61, label: 'H. Zoom',           group: 'Arrangement' },
   { id: 62, label: 'Jump Marker',       group: 'Arrangement' },
-  // Sends A-L
-  { id: 64, label: 'Send A',            group: 'Sends' },
-  { id: 65, label: 'Send B',            group: 'Sends' },
-  { id: 66, label: 'Send C',            group: 'Sends' },
-  { id: 67, label: 'Send D',            group: 'Sends' },
-  { id: 68, label: 'Send E',            group: 'Sends' },
-  { id: 69, label: 'Send F',            group: 'Sends' },
-  { id: 70, label: 'Send G',            group: 'Sends' },
-  { id: 71, label: 'Send H',            group: 'Sends' },
-  { id: 72, label: 'Send I',            group: 'Sends' },
-  { id: 73, label: 'Send J',            group: 'Sends' },
-  { id: 74, label: 'Send K',            group: 'Sends' },
-  { id: 75, label: 'Send L',            group: 'Sends' },
-  // Device Params 1-32
-  ...Array.from({ length: 32 }, (_, i) => ({ id: 80 + i, label: `Param ${i + 1}`, group: 'Device' })),
+  // Sends A-L (subgroup under Selected Track)
+  { id: 64, label: 'Send A',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 65, label: 'Send B',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 66, label: 'Send C',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 67, label: 'Send D',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 68, label: 'Send E',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 69, label: 'Send F',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 70, label: 'Send G',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 71, label: 'Send H',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 72, label: 'Send I',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 73, label: 'Send J',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 74, label: 'Send K',            group: 'Selected Track', subgroup: 'Sends' },
+  { id: 75, label: 'Send L',            group: 'Selected Track', subgroup: 'Sends' },
+  // Device Params 1-16
+  ...Array.from({ length: 16 }, (_, i) => ({ id: 80 + i, label: `Param ${i + 1}`, group: 'Device' })),
 ];
 
 let serialPort = null;
@@ -171,14 +171,31 @@ function fnMenuHtml(ctrl, idx, table, currentFnId) {
   const entry = table.find(f => f.id === currentFnId);
   const label = entry ? entry.label : '—';
   const groups = {};
-  for (const f of table) (groups[f.group] = groups[f.group] || []).push(f);
+  for (const f of table) {
+    if (!groups[f.group]) groups[f.group] = { direct: [], sub: {} };
+    if (f.subgroup) {
+      if (!groups[f.group].sub[f.subgroup]) groups[f.group].sub[f.subgroup] = [];
+      groups[f.group].sub[f.subgroup].push(f);
+    } else {
+      groups[f.group].direct.push(f);
+    }
+  }
   let inner = '';
-  for (const [g, items] of Object.entries(groups)) {
+  for (const [g, { direct, sub }] of Object.entries(groups)) {
+    let subContent = direct.map(f =>
+      `<div class="fnm-item" data-value="${f.id}">${f.label}</div>`
+    ).join('');
+    for (const [sg, sgItems] of Object.entries(sub)) {
+      subContent += `<div class="fnm-group fnm-nested">
+        <div class="fnm-group-hdr">${sg}<span class="fnm-arr">▸</span></div>
+        <div class="fnm-sub">${sgItems.map(f =>
+          `<div class="fnm-item" data-value="${f.id}">${f.label}</div>`
+        ).join('')}</div>
+      </div>`;
+    }
     inner += `<div class="fnm-group">
       <div class="fnm-group-hdr">${g}<span class="fnm-arr">▸</span></div>
-      <div class="fnm-sub">${items.map(f =>
-        `<div class="fnm-item" data-value="${f.id}">${f.label}</div>`
-      ).join('')}</div>
+      <div class="fnm-sub">${subContent}</div>
     </div>`;
   }
   return `<div class="fnm" data-ctrl="${ctrl}" data-idx="${idx}">
@@ -195,12 +212,28 @@ function attachFnmListeners(container, onItemSelect) {
       const wasOpen = dropdown.style.display === 'block';
       document.querySelectorAll('.fnm-dropdown').forEach(d => { d.style.display = 'none'; });
       if (!wasOpen) {
-        const rect = e.currentTarget.getBoundingClientRect();
+        const tr = e.currentTarget.getBoundingClientRect();
         dropdown.style.position = 'fixed';
-        dropdown.style.top  = (rect.bottom + 2) + 'px';
-        dropdown.style.left = rect.left + 'px';
+        dropdown.style.top = '-9999px'; dropdown.style.left = '-9999px';
         dropdown.style.display = 'block';
+        const dw = dropdown.offsetWidth, dh = dropdown.offsetHeight;
+        const vw = window.innerWidth, vh = window.innerHeight;
+        dropdown.style.top  = (tr.bottom + 2 + dh <= vh ? tr.bottom + 2 : Math.max(4, tr.top - dh - 2)) + 'px';
+        dropdown.style.left = Math.max(4, Math.min(tr.left, vw - dw - 4)) + 'px';
       }
+    });
+    menu.querySelectorAll('.fnm-group').forEach(group => {
+      const sub = group.querySelector('.fnm-sub');
+      group.addEventListener('mouseenter', () => {
+        const hdr = group.querySelector('.fnm-group-hdr').getBoundingClientRect();
+        sub.style.top = '-9999px'; sub.style.left = '-9999px';
+        sub.style.display = 'block';
+        const sw = sub.offsetWidth, sh = sub.offsetHeight;
+        const vw = window.innerWidth, vh = window.innerHeight;
+        sub.style.left = (hdr.right + sw <= vw ? hdr.right : Math.max(4, hdr.left - sw)) + 'px';
+        sub.style.top  = Math.max(4, Math.min(hdr.top, vh - sh - 4)) + 'px';
+      });
+      group.addEventListener('mouseleave', () => { sub.style.display = 'none'; });
     });
     menu.querySelectorAll('.fnm-item').forEach(item => {
       item.addEventListener('click', e => {
@@ -221,8 +254,8 @@ for (let p = 0; p < 24; p++) {
 }
 
 let globalData = {
-  encoders: Array.from({ length: 8 }, () => ({ fnId: 55})),
-  buttons:  Array.from({ length: 8 }, () => ({ fnId: 1 })),
+  encoders: Array.from({ length: 8 }, (_, i) => ({ fnId: 40 + i })),
+  buttons:  Array.from({ length: 8 }, (_, i) => ({ fnId: 50 + i })),
 };
 
 function setDisconnectedUI() {
@@ -655,8 +688,8 @@ function renderControls() {
 
   attachFnmListeners(grid, (ctrl, idx, fnId) => {
     const pd = presetData[currentPreset];
-    if (ctrl === 'enc') pd.encoders[idx].fnId = fnId;
-    else                pd.buttons[idx].fnId  = fnId;
+    if (ctrl === 'enc') { pd.encoders[idx].fnId = fnId; pd.encoders[idx].name = ''; }
+    else                { pd.buttons[idx].fnId  = fnId; pd.buttons[idx].name  = ''; }
     if (ctrl === 'enc') sendEncoder(currentPreset, idx);
     else                sendButton(currentPreset, idx);
     renderControls();
@@ -720,6 +753,10 @@ function sendEncoder(preset, idx) {
               enc.type === 1 ? 1 : 0, enc.min ?? 0, enc.max ?? 127,
               enc.isFunction ? 1 : 0, enc.isFunction ? enc.fnId : 0,
               0xf7]);
+  if (enc.isFunction && !enc.name) {
+    const label = getFnLabel(false, enc.fnId);
+    if (label) sendControlName(preset, idx, 0, label);
+  }
 }
 
 function sendButton(preset, idx) {
@@ -728,6 +765,10 @@ function sendButton(preset, idx) {
               btn.toggle ? 1 : 0, btn.min ?? 0, btn.max ?? 127,
               btn.isFunction ? 1 : 0, btn.isFunction ? btn.fnId : 0,
               0xf7]);
+  if (btn.isFunction && !btn.name) {
+    const label = getFnLabel(true, btn.fnId);
+    if (label) sendControlName(preset, idx, 1, label);
+  }
 }
 
 function sendPresetName(preset, name) {
@@ -887,12 +928,24 @@ function requestGlobal() {
   serialSend([0xf0, 0x6f, 0x1e, 0x00, 0xf7]);
 }
 
+function getFnLabel(isButton, fnId) {
+  const table = isButton ? BUTTON_FUNCTION_TABLE : ENCODER_FUNCTION_TABLE;
+  const entry = table.find(e => e.id === fnId);
+  return entry ? entry.label : '';
+}
+
 function sendGlobalEncoder(idx) {
-  serialSend([0xf0, 0x6f, 0x1c, idx, globalData.encoders[idx].fnId, 0xf7]);
+  const fnId = globalData.encoders[idx].fnId;
+  serialSend([0xf0, 0x6f, 0x1c, idx, fnId, 0xf7]);
+  const label = getFnLabel(false, fnId);
+  if (label) sendControlName(24, idx, 0, label);
 }
 
 function sendGlobalButton(idx) {
-  serialSend([0xf0, 0x6f, 0x1d, idx, globalData.buttons[idx].fnId, 0xf7]);
+  const fnId = globalData.buttons[idx].fnId;
+  serialSend([0xf0, 0x6f, 0x1d, idx, fnId, 0xf7]);
+  const label = getFnLabel(true, fnId);
+  if (label) sendControlName(24, idx, 1, label);
 }
 
 function renderGlobalControls() {
