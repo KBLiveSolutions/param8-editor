@@ -9,41 +9,43 @@ const BUTTON_FUNCTION_TABLE = [
   { id:  7, label: 'Capture MIDI',      group: 'Global' },
   { id:  8, label: 'Re-enable Auto.',   group: 'Global' },
   { id: 50, label: 'Metronome',         group: 'Global' },
+  { id: 57, label: 'Return to Default', group: 'Global' },
   // Arrangement
   { id: 56, label: 'Arr. Loop',         group: 'Arrangement' },
-  { id: 11, label: 'Continue',          group: 'Arrangement' },
-  { id: 12, label: 'Restart',           group: 'Arrangement' },
-  { id: 13, label: 'Back to Arr.',      group: 'Arrangement' },
   { id: 14, label: 'Arr. Record',       group: 'Arrangement' },
-  { id: 15, label: 'Marker -',          group: 'Arrangement' },
+  { id: 11, label: 'Continue',          group: 'Arrangement' },
+  // { id: 12, label: 'Restart',           group: 'Arrangement' },
   { id: 16, label: 'Marker +',          group: 'Arrangement' },
+  { id: 15, label: 'Marker -',          group: 'Arrangement' },
   { id: 17, label: 'Skip Forward',      group: 'Arrangement' },
   { id: 18, label: 'Skip Backward',     group: 'Arrangement' },
+  { id: 13, label: 'Back to Arr.',      group: 'Arrangement' },
   // Session
-  { id: 53, label: 'Launch Scene',      group: 'Session' },
   { id: 48, label: 'Scene +',           group: 'Session' },
   { id: 49, label: 'Scene -',           group: 'Session' },
+  { id: 53, label: 'Launch Scene',      group: 'Session' },
   { id: 22, label: 'Session Record',    group: 'Session' },
   { id: 23, label: 'Stop All Clips',    group: 'Session' },
-  // Navigation (fnIds match CCs expected by component layers)
-  { id: 20, label: 'Track -',           group: 'Navigation' },
-  { id: 21, label: 'Track +',           group: 'Navigation' },
-  { id: 24, label: 'Device -',          group: 'Navigation' },
-  { id: 25, label: 'Device +',          group: 'Navigation' },
-  { id: 26, label: 'Bank -',            group: 'Navigation' },
-  { id: 27, label: 'Bank +',            group: 'Navigation' },
-  { id: 30, label: 'Preset -',          group: 'Navigation' },
-  { id: 31, label: 'Preset +',          group: 'Navigation' },
-  // Track / Device
+  // Track
+  { id: 21, label: 'Track +',           group: 'Selected Track' },
+  { id: 20, label: 'Track -',           group: 'Selected Track' },
   { id: 54, label: 'Mute',              group: 'Selected Track' },
   { id: 55, label: 'Solo',              group: 'Selected Track' },
   { id: 51, label: 'Arm',               group: 'Selected Track' },
-  { id: 57, label: 'Return to Default', group: 'Selected Track' },
-  { id: 36, label: 'Prev Variation',    group: 'Device' },
-  { id: 37, label: 'Next Variation',    group: 'Device' },
-  { id: 38, label: 'Launch Variation',  group: 'Device' },
-  { id: 39, label: 'Store Variation',   group: 'Device' },
-  { id: 40, label: 'Randomize',         group: 'Device' },
+  // Device
+  { id: 25, label: 'Device +',          group: 'Device' },
+  { id: 24, label: 'Device -',          group: 'Device' },
+  { id: 27, label: 'Bank +',            group: 'Device' },
+  { id: 26, label: 'Bank -',            group: 'Device' },
+  // Compare A/B: CC23 falls through to MixerComponent in device mode (not user-assignable)
+  // { id: 36, label: 'Prev Variation',    group: 'Device' },
+  // { id: 37, label: 'Next Variation',    group: 'Device' },
+  // { id: 38, label: 'Launch Variation',  group: 'Device' },
+  // { id: 39, label: 'Store Variation',   group: 'Device' },
+  // { id: 40, label: 'Randomize',         group: 'Device' },
+  // Navigation (fnIds match CCs expected by component layers)
+  { id: 31, label: 'Preset +',          group: 'Navigation' },
+  { id: 30, label: 'Preset -',          group: 'Navigation' },
 ];
 
 const ENCODER_FUNCTION_TABLE = [
@@ -51,18 +53,19 @@ const ENCODER_FUNCTION_TABLE = [
   { id: 40, label: 'Master Volume',     group: 'Global' },
   { id: 41, label: 'Cue Volume',        group: 'Global' },
   { id: 42, label: 'BPM',               group: 'Global' },
+  { id: 56, label: 'Groove',            group: 'Global' },
   { id: 43, label: 'Scroll Scenes',     group: 'Global' },
+  { id: 47, label: 'Selected Param',    group: 'Global' },
+  // Selected Track (ids = CCs expected by MixerComponent layer)
   { id: 44, label: 'Track Volume',      group: 'Selected Track' },
   { id: 45, label: 'Track Pan',         group: 'Selected Track' },
-  { id: 46, label: 'Song Position',     group: 'Arrangement' },
-  { id: 47, label: 'Selected Param',    group: 'Global' },
-  { id: 56, label: 'Groove',            group: 'Global' },
   { id: 57, label: 'Track Select',      group: 'Selected Track' },
-  { id: 58, label: 'Select Preset',     group: 'Navigation' },
+  // Arrangement (ids = CCs expected by ArrangementComponent layer)
+  { id: 46, label: 'Song Position',     group: 'Arrangement' },
   { id: 59, label: 'Loop Position',     group: 'Arrangement' },
   { id: 60, label: 'Loop Length',       group: 'Arrangement' },
-  { id: 61, label: 'H. Zoom',           group: 'Arrangement' },
   { id: 62, label: 'Jump Marker',       group: 'Arrangement' },
+  { id: 61, label: 'Hor. Zoom',           group: 'Arrangement' },
   // Sends A-L (subgroup under Selected Track)
   { id: 64, label: 'Send A',            group: 'Selected Track', subgroup: 'Sends' },
   { id: 65, label: 'Send B',            group: 'Selected Track', subgroup: 'Sends' },
@@ -78,6 +81,8 @@ const ENCODER_FUNCTION_TABLE = [
   { id: 75, label: 'Send L',            group: 'Selected Track', subgroup: 'Sends' },
   // Device Params 1-16
   ...Array.from({ length: 16 }, (_, i) => ({ id: 80 + i, label: `Param ${i + 1}`, group: 'Device' })),
+  // Navigation
+  { id: 58, label: 'Select Preset',     group: 'Navigation' },
 ];
 
 let serialPort = null;
