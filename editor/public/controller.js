@@ -25,7 +25,7 @@ const BUTTON_FUNCTION_TABLE = [
   { id: 49, label: 'Scene -',           group: 'Session' },
   { id: 53, label: 'Launch Scene',      group: 'Session' },
   { id: 22, label: 'Session Record',    group: 'Session' },
-  { id: 23, label: 'Stop All Clips',    group: 'Session' },
+  { id: 28, label: 'Stop All Clips',    group: 'Session' },
   // Track
   { id: 21, label: 'Track +',           group: 'Selected Track' },
   { id: 20, label: 'Track -',           group: 'Selected Track' },
@@ -37,7 +37,7 @@ const BUTTON_FUNCTION_TABLE = [
   { id: 24, label: 'Device -',          group: 'Device' },
   { id: 27, label: 'Bank +',            group: 'Device' },
   { id: 26, label: 'Bank -',            group: 'Device' },
-  // Compare A/B: CC23 falls through to MixerComponent in device mode (not user-assignable)
+  { id: 23, label: 'Compare A/B',       group: 'Device' },
   // { id: 36, label: 'Prev Variation',    group: 'Device' },
   // { id: 37, label: 'Next Variation',    group: 'Device' },
   // { id: 38, label: 'Launch Variation',  group: 'Device' },
