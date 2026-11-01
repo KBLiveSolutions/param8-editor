@@ -678,6 +678,26 @@ button.danger:hover { background: #300; }
 .fnm-item:hover { background: #333; color: #fff; }
 .fnm-arr { font-size: 9px; opacity: 0.5; }
 
+.ctrl-assign-all {
+  display: block;
+  margin: 4px auto 0;
+  padding: 2px 12px;
+  background: #000;
+  border: 1px solid #2a5a9a;
+  color: #5a90cc;
+  border-radius: 999px;
+  font-size: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+.ctrl-assign-all:hover  { background: #0a1a2f; color: #7ab8f5; border-color: #4a80c0; }
+.ctrl-assign-all:active { background: #1e3a5f; }
+
 .ctrl-type-fixed {
   font-size: 14px;
   color: #eee;

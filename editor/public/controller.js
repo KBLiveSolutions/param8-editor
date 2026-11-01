@@ -6,7 +6,7 @@ const BUTTON_FUNCTION_TABLE = [
   { id:  4, label: 'Redo',              group: 'Global' },
   { id:  5, label: 'Tempo +1',          group: 'Global' },
   { id:  6, label: 'Tempo -1',          group: 'Global' },
-  { id:  7, label: 'Capture MIDI',      group: 'Global' },
+  { id:  7, label: 'Capture',            group: 'Global' },
   { id:  8, label: 'Re-enable Auto.',   group: 'Global' },
   { id: 50, label: 'Metronome',         group: 'Global' },
   { id: 57, label: 'Return to Default', group: 'Global' },
@@ -53,13 +53,13 @@ const ENCODER_FUNCTION_TABLE = [
   { id: 40, label: 'Master Volume',     group: 'Global' },
   { id: 41, label: 'Cue Volume',        group: 'Global' },
   { id: 42, label: 'BPM',               group: 'Global' },
-  { id: 56, label: 'Groove',            group: 'Global' },
+  { id: 63, label: 'Groove',            group: 'Global' },
   { id: 43, label: 'Scroll Scenes',     group: 'Global' },
   { id: 47, label: 'Selected Param',    group: 'Global' },
   // Selected Track (ids = CCs expected by MixerComponent layer)
   { id: 44, label: 'Track Volume',      group: 'Selected Track' },
   { id: 45, label: 'Track Pan',         group: 'Selected Track' },
-  { id: 57, label: 'Track Select',      group: 'Selected Track' },
+  { id: 76, label: 'Track Select',      group: 'Selected Track' },
   // Arrangement (ids = CCs expected by ArrangementComponent layer)
   { id: 46, label: 'Song Position',     group: 'Arrangement' },
   { id: 59, label: 'Loop Position',     group: 'Arrangement' },
@@ -590,6 +590,7 @@ function renderControls() {
            <div class="ctrl-section-label">TURN</div>
            ${fnTabs("enc", i, true)}
            <div class="ctrl-fields">${fnMenuHtml("enc", i, ENCODER_FUNCTION_TABLE, enc.fnId)}</div>
+           <button class="ctrl-assign-all" data-ctrl="enc" data-idx="${i}">Assign to all Presets</button>
          </div>`
       : `<div class="ctrl-section">
            <div class="ctrl-section-label">TURN</div>
@@ -622,6 +623,7 @@ function renderControls() {
            <div class="ctrl-section-label">PUSH</div>
            ${fnTabs("btn", i, true)}
            <div class="ctrl-fields">${fnMenuHtml("btn", i, BUTTON_FUNCTION_TABLE, btn.fnId)}</div>
+           <button class="ctrl-assign-all" data-ctrl="btn" data-idx="${i}">Assign to all Presets</button>
          </div>`
       : `<div class="ctrl-section ctrl-section-push">
            <div class="ctrl-section-label">PUSH</div>
@@ -698,6 +700,24 @@ function renderControls() {
     if (ctrl === 'enc') sendEncoder(currentPreset, idx);
     else                sendButton(currentPreset, idx);
     renderControls();
+  });
+
+  grid.querySelectorAll(".ctrl-assign-all").forEach(assignBtn => {
+    assignBtn.addEventListener("click", () => {
+      const ctrl     = assignBtn.dataset.ctrl;
+      const idx      = parseInt(assignBtn.dataset.idx);
+      const isButton = ctrl === 'btn' ? 1 : 0;
+      const src      = isButton ? presetData[currentPreset].buttons[idx] : presetData[currentPreset].encoders[idx];
+      const label     = getFnLabel(isButton === 1, src.fnId) || '';
+      const nameBytes = Array.from(label).map(c => c.charCodeAt(0) & 0x7F);
+      for (let p = 0; p < 24; p++) {
+        const target = isButton ? presetData[p].buttons[idx] : presetData[p].encoders[idx];
+        target.isFunction = true;
+        target.fnId  = src.fnId;
+        target.name  = label;
+      }
+      serialSend([0xF0, 0x6F, 0x20, isButton, idx, src.fnId, ...nameBytes, 0xF7]);
+    });
   });
 }
 
@@ -799,6 +819,7 @@ async function savePresetToFile() {
   const data = { preset: currentPreset + 1, presetName: pd.presetName, encoders: pd.encoders, buttons: pd.buttons };
   const json = JSON.stringify(data, null, 2);
   const filename = `param8-preset-${currentPreset + 1}.json`;
+  let saved = false;
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
@@ -808,10 +829,14 @@ async function savePresetToFile() {
       const writable = await handle.createWritable();
       await writable.write(json);
       await writable.close();
+      saved = true;
     } catch (e) {
-      if (e.name !== "AbortError") console.error("Save failed", e);
+      if (e.name === "AbortError") return;
+      // SecurityError in cross-origin iframes — fall through to blob download
+      if (e.name !== "SecurityError") console.error("Save failed", e);
     }
-  } else {
+  }
+  if (!saved) {
     const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
