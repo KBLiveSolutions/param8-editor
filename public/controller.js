@@ -504,6 +504,7 @@ async function savePresetToFile() {
   const data = { preset: currentPreset + 1, presetName: pd.presetName, encoders: pd.encoders, buttons: pd.buttons };
   const json = JSON.stringify(data, null, 2);
   const filename = `param8-preset-${currentPreset + 1}.json`;
+  let saved = false;
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
@@ -513,10 +514,14 @@ async function savePresetToFile() {
       const writable = await handle.createWritable();
       await writable.write(json);
       await writable.close();
+      saved = true;
     } catch (e) {
-      if (e.name !== "AbortError") console.error("Save failed", e);
+      if (e.name === "AbortError") return;
+      // SecurityError in cross-origin iframes — fall through to blob download
+      if (e.name !== "SecurityError") console.error("Save failed", e);
     }
-  } else {
+  }
+  if (!saved) {
     const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
     const a = document.createElement("a");
     a.href = url;
