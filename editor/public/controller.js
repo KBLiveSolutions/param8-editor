@@ -6,10 +6,11 @@ const BUTTON_FUNCTION_TABLE = [
   { id:  4, label: 'Redo',              group: 'Global' },
   { id:  5, label: 'Tempo +1',          group: 'Global' },
   { id:  6, label: 'Tempo -1',          group: 'Global' },
-  { id:  7, label: 'Capture',            group: 'Global' },
+  { id:  7, label: 'Session Record',      group: 'Session' },
   { id:  8, label: 'Re-enable Auto.',   group: 'Global' },
   { id: 50, label: 'Metronome',         group: 'Global' },
   { id: 57, label: 'Return to Default', group: 'Global' },
+  { id: 29, label: 'Capture',            group: 'Global' },
   // Arrangement (113-119: moved from 11-17 to avoid conflict with device mode encoder CCs)
   { id:  56, label: 'Arr. Loop',         group: 'Arrangement' },
   { id: 116, label: 'Arr. Record',       group: 'Arrangement' },
@@ -24,7 +25,6 @@ const BUTTON_FUNCTION_TABLE = [
   { id: 48, label: 'Scene +',           group: 'Session' },
   { id: 49, label: 'Scene -',           group: 'Session' },
   { id: 53, label: 'Launch Scene',      group: 'Session' },
-  { id: 22, label: 'Session Record',    group: 'Session' },
   { id: 28, label: 'Stop All Clips',    group: 'Session' },
   // Track
   { id: 21, label: 'Track +',           group: 'Selected Track' },
@@ -38,6 +38,7 @@ const BUTTON_FUNCTION_TABLE = [
   { id: 27, label: 'Bank +',            group: 'Device' },
   { id: 26, label: 'Bank -',            group: 'Device' },
   { id: 23, label: 'Compare A/B',       group: 'Device' },
+  { id: 22, label: 'Device On',       group: 'Device' },
   // { id: 36, label: 'Prev Variation',    group: 'Device' },
   // { id: 37, label: 'Next Variation',    group: 'Device' },
   // { id: 38, label: 'Launch Variation',  group: 'Device' },
@@ -265,13 +266,17 @@ let globalData = {
 
 function setDisconnectedUI() {
   const stateEl = document.getElementById("midi-state");
-  stateEl.textContent = "Disconnected";
-  stateEl.style.color = "#f44";
-  document.getElementById("midi-connected-options").classList.add("hidden");
+  stateEl.textContent = "param8 not connected";
+  stateEl.style.color = "#888";
+  const fwVer = document.getElementById("fw-version"); if (fwVer) fwVer.classList.add("hidden");
+  document.getElementById("settings-connected").classList.add("hidden");
+  document.getElementById("settings-disconnected").classList.remove("hidden");
   document.getElementById("midi-connect").classList.remove("hidden");
   document.getElementById("midi-disconnect").classList.add("hidden");
   currentScriptVersion = null;
+  currentFirmwareVersion = null;
   updateScriptVersionUI();
+  applyFirmwareCapabilities();
   document.getElementById("serial-log-panel").classList.add("hidden");
 }
 
@@ -305,8 +310,8 @@ async function connectSerial(port) {
     serialWriter = serialPort.writable.getWriter();
     stateEl.textContent = "Connected (Serial)";
     stateEl.style.color = "#4caf50";
-    document.getElementById("controller-config").classList.remove("hidden");
-    document.getElementById("midi-connected-options").classList.remove("hidden");
+    document.getElementById("settings-connected").classList.remove("hidden");
+    document.getElementById("settings-disconnected").classList.add("hidden");
     document.getElementById("midi-connect").classList.add("hidden");
     document.getElementById("midi-disconnect").classList.remove("hidden");
     readSerialLoop();
@@ -314,6 +319,7 @@ async function connectSerial(port) {
     requestPreset(currentPreset);
     requestGlobal();
     requestVersion();
+    requestSlew();
     retryRequestTimeout = setTimeout(() => {
       if (presetData[currentPreset].encoders[0].number === 0 &&
           presetData[currentPreset].encoders[0].name === "") {
@@ -401,16 +407,35 @@ async function fetchLatestFirmwareInfo() {
   updateFirmwareVersionUI();
 }
 
+function fwAtLeast(major, minor) {
+  if (!currentFirmwareVersion) return true;
+  const [ma, mi] = currentFirmwareVersion.split('.').map(Number);
+  return ma > major || (ma === major && mi >= minor);
+}
+
+function applyFirmwareCapabilities() {
+  const v11 = fwAtLeast(1, 1);
+  document.body.classList.toggle('fw-v11', v11);
+  if (!v11) {
+    const activeTab = document.querySelector('.main-tab.active');
+    if (activeTab && activeTab.dataset.tab === 'global') {
+      document.querySelector('.main-tab[data-tab="user"]').click();
+    }
+  }
+}
+
 function updateFirmwareVersionUI() {
-  const versionEl = document.getElementById("fw-version");
   const banner = document.getElementById("fw-update-banner");
   const textEl = document.getElementById("fw-update-text");
   const downloadLink = document.getElementById("fw-update-download");
-  if (!versionEl || !banner || !textEl || !downloadLink) return;
+  if (!banner || !textEl || !downloadLink) return;
 
+  applyFirmwareCapabilities();
   if (currentFirmwareVersion) {
-    versionEl.textContent = `Firmware v${currentFirmwareVersion}`;
-    versionEl.classList.remove("hidden");
+    const settingsVer = document.getElementById("fw-version-settings");
+    if (settingsVer) settingsVer.textContent = `v${currentFirmwareVersion}`;
+    const sep = document.getElementById("settings-ver-sep");
+    if (sep) sep.classList.remove("hidden");
   }
 
   if (currentFirmwareVersion && latestFirmwareInfo && latestFirmwareInfo.version) {
@@ -440,6 +465,23 @@ function onMessage(d) {
   if (d[0] !== 0xf0 || d[1] !== 0x6f) return;
   const status = d[2];
   console.log("SysEx received:", Array.from(d).map(b => b.toString(16)).join(" "));
+
+  if (status === 0x04) {
+    const preset = d[3];
+    if (preset < 24) {
+      currentPreset = preset;
+      const presetSelect = document.getElementById("preset-select");
+      if (presetSelect) presetSelect.value = String(preset);
+      const nameInput = document.getElementById("preset-name-input");
+      if (nameInput) {
+        nameInput.value = presetData[preset].presetName || "";
+        nameInput.placeholder = "Preset " + (preset + 1);
+      }
+      requestPreset(preset);
+      renderControls();
+    }
+    return;
+  }
 
   if (status === 0x14) {
     currentFirmwareVersion = `${d[3]}.${d[4]}.${d[5]}`;
@@ -473,6 +515,16 @@ function onMessage(d) {
     const brightness = d[3] & 0x7F;
     const select = document.getElementById("brightness-select");
     if (select) select.value = String(brightness);
+    return;
+  }
+
+  if (status === 0x24) {
+    updateSlewUI('latch', d[3] & 0x7f, d[4] & 0x7f, d[5] & 0x7f);
+    return;
+  }
+
+  if (status === 0x25) {
+    updateSlewUI('revert', d[3] & 0x7f, d[4] & 0x7f, d[5] & 0x7f);
     return;
   }
 
@@ -658,8 +710,8 @@ function renderControls() {
     card.innerHTML = `
       <div class="ctrl-number">${i + 1}</div>
       <hr class="ctrl-separator">
-      ${encoderBlock}
       ${buttonBlock}
+      ${encoderBlock}
     `;
     grid.appendChild(card);
   }
@@ -846,40 +898,62 @@ async function savePresetToFile() {
   }
 }
 
+function applyPresetText(text) {
+  try {
+    const data = JSON.parse(text);
+    if (!data.encoders || !data.buttons) return;
+    for (let i = 0; i < 8; i++) {
+      if (data.encoders[i]) presetData[currentPreset].encoders[i] = data.encoders[i];
+      if (data.buttons[i]) presetData[currentPreset].buttons[i] = data.buttons[i];
+    }
+    if (data.presetName !== undefined) {
+      presetData[currentPreset].presetName = data.presetName;
+      document.getElementById("preset-name-input").value = data.presetName || "";
+    }
+    sendFullPreset(currentPreset);
+    renderControls();
+  } catch (err) {
+    console.error("Invalid preset file", err);
+  }
+}
+
 function loadPresetFromFile(file) {
   const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (!data.encoders || !data.buttons) return;
-      for (let i = 0; i < 8; i++) {
-        if (data.encoders[i]) presetData[currentPreset].encoders[i] = data.encoders[i];
-        if (data.buttons[i]) presetData[currentPreset].buttons[i] = data.buttons[i];
-      }
-      if (data.presetName !== undefined) {
-        presetData[currentPreset].presetName = data.presetName;
-        document.getElementById("preset-name-input").value = data.presetName || "";
-      }
-      sendFullPreset(currentPreset);
-      renderControls();
-    } catch (err) {
-      console.error("Invalid preset file", err);
-    }
-  };
+  reader.onload = (e) => applyPresetText(e.target.result);
   reader.readAsText(file);
 }
 
+async function loadPresetFromPicker() {
+  if (window.showOpenFilePicker) {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+      });
+      const file = await handle.getFile();
+      applyPresetText(await file.text());
+      return;
+    } catch (e) {
+      if (e.name === "AbortError") return;
+      if (e.name !== "SecurityError") console.error("Load failed", e);
+    }
+  }
+  document.getElementById("ctrl-load-input").click();
+}
+
 function initControllerUI() {
-  // Mode tabs (User / Global)
-  document.querySelectorAll(".preset-tab").forEach((btn) => {
+  // Main tab switching: User / Global / Settings
+  document.querySelectorAll(".main-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".preset-tab").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".main-tab").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      document.querySelectorAll(".mode-section").forEach((s) => s.classList.add("hidden"));
-      document.getElementById("mode-" + btn.dataset.mode).classList.remove("hidden");
-      if (btn.dataset.mode === "global") {
+      document.querySelectorAll(".main-tab-panel").forEach((p) => p.classList.add("hidden"));
+      document.getElementById("panel-" + btn.dataset.tab).classList.remove("hidden");
+      if (btn.dataset.tab === "global") {
         requestGlobal();
         renderGlobalControls();
+      }
+      if (btn.dataset.tab === "settings") {
+        updateFirmwareVersionUI();
       }
     });
   });
@@ -908,9 +982,6 @@ function initControllerUI() {
     sendPresetName(currentPreset, presetNameInput.value);
   });
 
-  document.getElementById("serial-log-toggle").addEventListener("click", () => {
-    document.getElementById("serial-log-panel").classList.toggle("hidden");
-  });
   document.getElementById("serial-log-close").addEventListener("click", () => {
     document.getElementById("serial-log-panel").classList.add("hidden");
   });
@@ -930,8 +1001,34 @@ function initControllerUI() {
     sendBrightness(parseInt(e.target.value));
   });
 
+  for (const type of ['latch', 'revert']) {
+    document.getElementById(`${type}-slew-mode`).addEventListener("click", () => {
+      const btn = document.getElementById(`${type}-slew-mode`);
+      const syncMode = btn.textContent !== 'Sync';
+      const level = parseInt(document.getElementById(`${type}-slew-level`).value);
+      const syncStep = parseInt(document.getElementById(`${type}-slew-step`).value);
+      updateSlewUI(type, level, syncMode ? 1 : 0, syncStep);
+      type === 'latch' ? sendLatchSlew(level, syncMode, syncStep) : sendRevertSlew(level, syncMode, syncStep);
+    });
+
+    document.getElementById(`${type}-slew-level`).addEventListener("input", (e) => {
+      document.getElementById(`${type}-slew-val`).textContent = formatSlewTime(parseInt(e.target.value));
+    });
+
+    document.getElementById(`${type}-slew-level`).addEventListener("change", (e) => {
+      const level = parseInt(e.target.value);
+      const syncStep = parseInt(document.getElementById(`${type}-slew-step`).value);
+      type === 'latch' ? sendLatchSlew(level, false, syncStep) : sendRevertSlew(level, false, syncStep);
+    });
+
+    document.getElementById(`${type}-slew-step`).addEventListener("change", (e) => {
+      const level = parseInt(document.getElementById(`${type}-slew-level`).value);
+      type === 'latch' ? sendLatchSlew(level, true, parseInt(e.target.value)) : sendRevertSlew(level, true, parseInt(e.target.value));
+    });
+  }
+
   const loadInput = document.getElementById("ctrl-load-input");
-  document.getElementById("ctrl-load").addEventListener("click", () => loadInput.click());
+  document.getElementById("ctrl-load").addEventListener("click", () => loadPresetFromPicker());
   loadInput.addEventListener("change", (e) => {
     if (e.target.files[0]) {
       loadPresetFromFile(e.target.files[0]);
@@ -956,6 +1053,41 @@ function sendBrightness(value) {
 
 function requestGlobal() {
   serialSend([0xf0, 0x6f, 0x1e, 0x00, 0xf7]);
+}
+
+function requestSlew() {
+  serialSend([0xf0, 0x6f, 0x26, 0x00, 0xf7]);
+}
+
+function formatSlewTime(level) {
+  if (level === 0) return 'Off';
+  const ms = Math.round(100 * Math.pow(590, (level - 1) / 126));
+  if (ms < 1000) return ms + 'ms';
+  return (ms / 1000).toFixed(1) + 's';
+}
+
+function updateSlewUI(type, level, syncMode, syncStep) {
+  const btn      = document.getElementById(`${type}-slew-mode`);
+  const timePart = document.getElementById(`${type}-slew-time-part`);
+  const stepSel  = document.getElementById(`${type}-slew-step`);
+  const levelIn  = document.getElementById(`${type}-slew-level`);
+  const valSpan  = document.getElementById(`${type}-slew-val`);
+  const isSync   = syncMode !== 0;
+  btn.textContent = isSync ? 'Sync' : 'Time';
+  btn.classList.toggle('active', isSync);
+  timePart.classList.toggle('hidden', isSync);
+  stepSel.classList.toggle('hidden', !isSync);
+  levelIn.value = String(level);
+  valSpan.textContent = formatSlewTime(level);
+  stepSel.value = String(syncStep);
+}
+
+function sendLatchSlew(level, syncMode, syncStep) {
+  serialSend([0xf0, 0x6f, 0x24, level & 0x7f, syncMode ? 1 : 0, syncStep & 0x7f, 0xf7]);
+}
+
+function sendRevertSlew(level, syncMode, syncStep) {
+  serialSend([0xf0, 0x6f, 0x25, level & 0x7f, syncMode ? 1 : 0, syncStep & 0x7f, 0xf7]);
 }
 
 function getFnLabel(isButton, fnId) {
@@ -983,8 +1115,7 @@ function renderGlobalControls() {
   container.innerHTML = "";
 
   const grid = document.createElement("div");
-  grid.className = "controls-grid";
-  grid.style.marginTop = "12px";
+  grid.className = "controls-grid global-controls-grid";
 
   for (let i = 0; i < 8; i++) {
     const card = document.createElement("div");
@@ -992,16 +1123,16 @@ function renderGlobalControls() {
     card.innerHTML = `
       <div class="ctrl-number">${i + 1}</div>
       <hr class="ctrl-separator">
-      <div class="ctrl-section">
-        <div class="ctrl-section-label">TURN</div>
-        <div class="ctrl-fields">
-          ${fnMenuHtml("genc", i, ENCODER_FUNCTION_TABLE, globalData.encoders[i].fnId)}
-        </div>
-      </div>
       <div class="ctrl-section ctrl-section-push">
         <div class="ctrl-section-label">PUSH</div>
         <div class="ctrl-fields">
           ${fnMenuHtml("gbtn", i, BUTTON_FUNCTION_TABLE, globalData.buttons[i].fnId)}
+        </div>
+      </div>
+      <div class="ctrl-section">
+        <div class="ctrl-section-label">TURN</div>
+        <div class="ctrl-fields">
+          ${fnMenuHtml("genc", i, ENCODER_FUNCTION_TABLE, globalData.encoders[i].fnId)}
         </div>
       </div>
     `;

@@ -320,24 +320,111 @@ button.danger:hover { background: #300; }
   font-size: 13px; color: #ccc; margin-left: 8px;
 }
 
-#midi-status {
-  display: flex; gap: 12px; align-items: center;
-  margin: 20px 24px;
-  padding: 14px 16px;
+/* ── Top navigation bar ──────────────────────────────────────────────────── */
+#top-bar {
+  display: flex;
+  align-items: stretch;
+  height: 38px;
+  border-bottom: 1px solid #3d3d3d;
+  background: var(--bg);
+  padding: 0 80px 0 24px; /* right: leave room for the extension's CLOSE button */
+  flex-shrink: 0;
+}
+
+.main-tabs {
+  display: flex;
+  gap: 0;
+}
+.main-tab {
+  padding: 0 20px;
+  height: 38px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.1s, border-color 0.1s;
+}
+.main-tab:hover { color: #bbb; }
+.main-tab.active { color: #fff; border-bottom-color: #fff; }
+
+#connection-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+#midi-state { font-size: 13px; font-family: inherit; color: #888; }
+#fw-version { font-size: 12px; color: var(--text-muted); font-family: inherit; }
+
+/* ── Main tab panels ─────────────────────────────────────────────────────── */
+.main-tab-panel {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* ── Settings panel ──────────────────────────────────────────────────────── */
+#settings-disconnected {
+  padding: 40px 24px;
+}
+.settings-hint {
+  color: #666;
+  font-size: 13px;
+}
+#settings-connected {
+  padding: 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.settings-cards-row {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  align-items: flex-start;
+  max-width: 560px;
+  align-self: center;
+  width: 100%;
+}
+.settings-ver-row {
+  display: flex; gap: 8px; align-items: center;
+}
+.settings-fw-ver {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: inherit;
+}
+.settings-ver-sep { font-size: 12px; color: #444; }
+.settings-card {
+  flex: 1;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-#midi-state { font-size: 14px; font-family: inherit; }
-#fw-version { font-size: 12px; color: var(--text-muted); font-family: inherit; }
-#midi-connected-options {
+.settings-card-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #555;
+}
+.settings-row {
   display: flex; gap: 8px; align-items: center;
-  margin-left: auto;
 }
 
 #fw-update-banner {
   display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
-  margin: 0 24px 12px;
+  margin: 12px 24px 0;
   padding: 12px 16px;
   background: var(--bg-surface);
   border: 1px solid var(--accent-border);
@@ -359,7 +446,7 @@ button.danger:hover { background: #300; }
 
 #script-update-banner {
   display: flex; align-items: center; gap: 12px;
-  margin: 0 24px 12px;
+  margin: 12px 24px 0;
   padding: 12px 16px;
   background: var(--bg-surface);
   border: 1px solid #c8860a;
@@ -380,7 +467,7 @@ button.danger:hover { background: #300; }
 
 /* Controller Editor */
 .ctrl-layout {
-  padding: 0 24px;
+  padding: 0;
 }
 
 .ctrl-top-bar {
@@ -421,7 +508,7 @@ button.danger:hover { background: #300; }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 8px 0 12px 0;
+  padding: 8px 24px;
 }
 .preset-toolbar button {
   font-size: 12px;
@@ -487,13 +574,77 @@ button.danger:hover { background: #300; }
   color: #000;
 }
 
+.slew-toggle-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius);
+  background: #000;
+  color: #aaa;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.slew-toggle-btn:hover { background: #111; color: #ddd; }
+.slew-toggle-btn.open {
+  background: #fff;
+  border-color: #fff;
+  color: #000;
+}
+
+.slew-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.slew-mode-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid var(--border-input);
+  border-radius: var(--radius);
+  background: #000;
+  color: #ddd;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+.slew-mode-btn:hover { background: #111; }
+.slew-mode-btn.active {
+  background: #fff;
+  border-color: #fff;
+  color: #000;
+}
+.slew-time-part {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.slew-time-part input[type=range] {
+  width: 72px;
+  accent-color: #fff;
+  cursor: pointer;
+}
+.slew-val {
+  font-size: 12px;
+  color: #aaa;
+  font-family: monospace;
+  min-width: 36px;
+  text-align: left;
+}
+
 .controls-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 8px;
   max-width: 1100px;
   margin: 0 auto;
 }
+.controls-grid.global-controls-grid { margin-top: 42px; }
 
 .ctrl-card {
   background: var(--bg-surface);
@@ -509,7 +660,7 @@ button.danger:hover { background: #300; }
   font-weight: 700;
   color: #ccc;
   text-align: center;
-  padding: 5px 0 2px;
+  padding: 3px 0 1px;
   font-family: inherit;
 }
 
@@ -520,7 +671,7 @@ button.danger:hover { background: #300; }
 }
 
 .ctrl-section {
-  padding: 6px 8px 8px;
+  padding: 4px 8px 6px;
 }
 
 .ctrl-section-label {
@@ -591,7 +742,15 @@ button.danger:hover { background: #300; }
 .ctrl-fn-tab-user.active { background: #1e3a1e; color: #7af57a; border-color: #2a7a2a; }
 .ctrl-fn-tab-daw.active  { background: #1e3a5f; color: #7ab8f5; border-color: #2a5a9a; }
 
-#controls-grid .ctrl-section { min-height: 152px; }
+/* v1.1 feature gating */
+.v11-only                      { display: none; }
+body.fw-v11 .v11-only          { display: inline-block; }
+.ctrl-fn-tab-daw               { display: none; }
+body.fw-v11 .ctrl-fn-tab-daw   { display: inline-block; }
+body.fw-v11 .ctrl-fn-tab-user  { border-radius: var(--radius) 0 0 var(--radius); }
+body:not(.fw-v11) .ctrl-fn-tab-user { border-radius: var(--radius); }
+
+#controls-grid .ctrl-section { min-height: 132px; }
 
 .fnm { position: relative; width: 100%; }
 

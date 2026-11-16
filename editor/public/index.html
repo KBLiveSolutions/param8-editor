@@ -13,47 +13,25 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
 </head>
 <body>
-  <!-- <header>
-    <h1>param8 Editor</h1>
-  </header> -->
 
   <main>
-    <!-- Controller Config Tab -->
     <section id="tab-controller" class="tab-content active">
-      <div id="midi-status">
-        <span id="midi-state">param8 not connected</span>
-        <span id="fw-version" class="hidden"></span>
-        <a id="changelog-toggle" href="#">Changelog</a>
-        <select id="port-select" class="hidden"></select>
-        <button id="midi-connect">Connect</button>
-        <button id="midi-disconnect" class="hidden danger">Disconnect</button>
-        <div id="midi-connected-options" class="hidden">
-          <span class="ctrl-ch-label">Layout</span>
-          <div class="layout-tabs">
-            <button class="layout-tab active" data-layout="0">Dynamic</button>
-            <button class="layout-tab" data-layout="1">Compact</button>
-            <button class="layout-tab hidden" data-layout="2">Stacked</button>
-          </div>
-          <span class="ctrl-ch-label">Brightness</span>
-          <select id="brightness-select" class="ctrl-ch" style="width:64px">
-            <option value="0">Low</option>
-            <option value="1" selected>Mid</option>
-            <option value="2">High</option>
-          </select>
-          <span class="ctrl-ch-label">Screensaver</span>
-          <select id="screensaver-select" class="ctrl-ch">
-            <option value="0">Off</option>
-            <option value="60">1 min</option>
-            <option value="120">2 min</option>
-            <option value="300" selected>5 min</option>
-            <option value="600">10 min</option>
-            <option value="1800">30 min</option>
-            <option value="3600">60 min</option>
-            <option value="7200">120 min</option>
-          </select>
-          <button id="serial-log-toggle">Log</button>
+
+      <!-- Top navigation bar -->
+      <div id="top-bar">
+        <nav class="main-tabs">
+          <button class="main-tab active" data-tab="user">User</button>
+          <button class="main-tab v11-only" data-tab="global">Global</button>
+          <button class="main-tab" data-tab="settings">Settings</button>
+        </nav>
+        <div id="connection-area">
+          <span id="midi-state">param8 not connected</span>
+          <button id="midi-connect">Connect</button>
+          <button id="midi-disconnect" class="hidden danger">Disconnect</button>
         </div>
       </div>
+
+      <!-- Update banners (always visible when relevant) -->
       <div id="fw-update-banner" class="hidden">
         <span id="fw-update-text"></span>
         <a id="fw-update-download" href="#" download>Download update</a>
@@ -62,31 +40,120 @@
       <div id="script-update-banner" class="hidden">
         <span>The Ableton script is outdated. Please update it to match the firmware version.</span>
       </div>
-      <div id="controller-config">
-        <div class="ctrl-layout">
-          <div class="preset-tabs">
-            <button class="preset-tab active" data-mode="user">User</button>
-            <button class="preset-tab" data-mode="global">Global</button>
-          </div>
-          <div id="mode-user" class="mode-section">
-            <div class="preset-toolbar">
-              <span class="ctrl-ch-label">Preset</span>
-              <select id="preset-select" class="ctrl-ch" style="width:110px"></select>
-              <span class="ctrl-ch-label">Name</span>
-              <input type="text" id="preset-name-input" maxlength="19" placeholder="Preset 1">
-              <button id="ctrl-save">Save...</button>
-              <button id="ctrl-load">Load...</button>
-              <input type="file" id="ctrl-load-input" accept=".json" class="hidden">
-            </div>
-            <div id="controls-grid" class="controls-grid"></div>
-          </div>
 
-          <div id="mode-global" class="mode-section hidden"></div>
-          <div id="mode-device" class="mode-section hidden"></div>
+      <!-- User tab -->
+      <div id="panel-user" class="main-tab-panel">
+        <div id="mode-user">
+          <div class="preset-toolbar">
+            <span class="ctrl-ch-label">Preset</span>
+            <select id="preset-select" class="ctrl-ch" style="width:110px"></select>
+            <span class="ctrl-ch-label">Name</span>
+            <input type="text" id="preset-name-input" maxlength="19" placeholder="Preset 1">
+            <button id="ctrl-save">Save...</button>
+            <button id="ctrl-load">Load...</button>
+            <input type="file" id="ctrl-load-input" accept=".json" class="hidden">
+          </div>
+          <div id="controls-grid" class="controls-grid"></div>
         </div>
       </div>
-    </section>
 
+      <!-- Global tab -->
+      <div id="panel-global" class="main-tab-panel hidden">
+        <div id="mode-global"></div>
+      </div>
+
+      <!-- Settings tab -->
+      <div id="panel-settings" class="main-tab-panel hidden">
+        <div id="settings-disconnected">
+          <p class="settings-hint">Connect your param8 to access settings.</p>
+        </div>
+        <div id="settings-connected" class="hidden">
+          <div class="settings-ver-row">
+            <span id="fw-version-settings" class="settings-fw-ver"></span>
+            <span class="settings-ver-sep hidden" id="settings-ver-sep">·</span>
+            <a id="changelog-toggle" href="#">Changelog</a>
+          </div>
+          <div class="settings-cards-row">
+          <div class="settings-card">
+            <span class="settings-card-title">Appearance</span>
+            <div class="settings-row">
+              <span class="ctrl-ch-label">Layout</span>
+              <div class="layout-tabs">
+                <button class="layout-tab active" data-layout="0">Dynamic</button>
+                <button class="layout-tab" data-layout="1">Compact</button>
+                <button class="layout-tab hidden" data-layout="2">Stacked</button>
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="ctrl-ch-label">Brightness</span>
+              <select id="brightness-select" class="ctrl-ch" style="width:64px">
+                <option value="0">Low</option>
+                <option value="1" selected>Mid</option>
+                <option value="2">High</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <span class="ctrl-ch-label">Screensaver</span>
+              <select id="screensaver-select" class="ctrl-ch" style="width:80px">
+                <option value="0">Off</option>
+                <option value="60">1 min</option>
+                <option value="120">2 min</option>
+                <option value="300" selected>5 min</option>
+                <option value="600">10 min</option>
+                <option value="1800">30 min</option>
+                <option value="3600">60 min</option>
+                <option value="7200">120 min</option>
+              </select>
+            </div>
+          </div>
+          <div class="settings-card">
+            <span class="settings-card-title">Slew</span>
+            <div class="settings-row">
+              <span class="ctrl-ch-label">Latch</span>
+              <div class="slew-ctrl" id="latch-slew-ctrl">
+                <button class="slew-mode-btn" id="latch-slew-mode">Time</button>
+                <div class="slew-time-part" id="latch-slew-time-part">
+                  <input type="range" id="latch-slew-level" min="0" max="127" value="0">
+                  <span class="slew-val" id="latch-slew-val">Off</span>
+                </div>
+                <select id="latch-slew-step" class="ctrl-ch hidden" style="width:62px">
+                  <option value="0">1/16</option>
+                  <option value="1">1/8</option>
+                  <option value="2" selected>1/4</option>
+                  <option value="3">1/2</option>
+                  <option value="4">1 bar</option>
+                  <option value="5">2 bar</option>
+                  <option value="6">4 bar</option>
+                  <option value="7">8 bar</option>
+                </select>
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="ctrl-ch-label">Revert</span>
+              <div class="slew-ctrl" id="revert-slew-ctrl">
+                <button class="slew-mode-btn" id="revert-slew-mode">Time</button>
+                <div class="slew-time-part" id="revert-slew-time-part">
+                  <input type="range" id="revert-slew-level" min="0" max="127" value="0">
+                  <span class="slew-val" id="revert-slew-val">Off</span>
+                </div>
+                <select id="revert-slew-step" class="ctrl-ch hidden" style="width:62px">
+                  <option value="0">1/16</option>
+                  <option value="1">1/8</option>
+                  <option value="2" selected>1/4</option>
+                  <option value="3">1/2</option>
+                  <option value="4">1 bar</option>
+                  <option value="5">2 bar</option>
+                  <option value="6">4 bar</option>
+                  <option value="7">8 bar</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          </div><!-- /.settings-cards-row -->
+        </div>
+      </div>
+
+    </section>
   </main>
 
   <div id="changelog-panel" class="hidden">
