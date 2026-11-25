@@ -127,7 +127,13 @@ let currentFirmwareVersion = null;
 let currentScriptVersion = null;
 let latestFirmwareInfo = null;
 let currentPreset = 0;
+let presetDirty = false;
+let globalDirty = false;
 let presetData = [];
+let _dragSrc = -1;
+let _dragType = null;
+let _dragGhost = null;
+let _dragOverCard = null;
 let retryRequestTimeout = null;
 
 const NOTE_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -252,17 +258,31 @@ function attachFnmListeners(container, onItemSelect) {
 }
 
 for (let p = 0; p < 24; p++) {
-  presetData[p] = { encoders: [], buttons: [], presetName: "" };
+  presetData[p] = { encoders: [], buttons: [], presetName: "", labels: [0, 0, 0, 0] };
   for (let i = 0; i < 8; i++) {
     presetData[p].encoders[i] = { type: 0, number: 0, channel: 0, min: 0, max: 127, name: "", isFunction: false, fnId: 55};
-    presetData[p].buttons[i]  = { type: 0, number: 0, channel: 0, toggle: false, min: 0, max: 127, name: "", isFunction: false, fnId: 1 };
+    presetData[p].buttons[i]  = { type: 0, number: 0, channel: 0, pressMode: 0, min: 0, max: 127, name: "", isFunction: false, fnId: 1 };
   }
 }
 
 let globalData = {
   encoders: Array.from({ length: 8 }, (_, i) => ({ fnId: 40 + i })),
   buttons:  Array.from({ length: 8 }, (_, i) => ({ fnId: 50 + i })),
+  labels: [0, 0, 0, 0],
 };
+
+function updateSendButton() {
+  const connected = !!serialWriter;
+  const btn = document.getElementById("ctrl-send");
+  if (btn) { btn.disabled = !connected; btn.classList.toggle("primary", connected && presetDirty); }
+  const gbtn = document.getElementById("global-send");
+  if (gbtn) { gbtn.disabled = !connected; gbtn.classList.toggle("primary", connected && globalDirty); }
+}
+
+function markDirty() { presetDirty = true; updateSendButton(); }
+function markClean() { presetDirty = false; updateSendButton(); }
+function markGlobalDirty() { globalDirty = true; updateSendButton(); }
+function markGlobalClean() { globalDirty = false; updateSendButton(); }
 
 function setDisconnectedUI() {
   const stateEl = document.getElementById("midi-state");
@@ -278,6 +298,7 @@ function setDisconnectedUI() {
   updateScriptVersionUI();
   applyFirmwareCapabilities();
   document.getElementById("serial-log-panel").classList.add("hidden");
+  updateSendButton();
 }
 
 async function disconnectSerial() {
@@ -310,6 +331,7 @@ async function connectSerial(port) {
     serialWriter = serialPort.writable.getWriter();
     stateEl.textContent = "Connected (Serial)";
     stateEl.style.color = "#4caf50";
+    updateSendButton();
     document.getElementById("settings-connected").classList.remove("hidden");
     document.getElementById("settings-disconnected").classList.add("hidden");
     document.getElementById("midi-connect").classList.add("hidden");
@@ -518,6 +540,12 @@ function onMessage(d) {
     return;
   }
 
+  if (status === 0x29) {
+    const select = document.getElementById("leds-select");
+    if (select) select.value = String(d[3] & 0x01);
+    return;
+  }
+
   if (status === 0x24) {
     updateSlewUI('latch', d[3] & 0x7f, d[4] & 0x7f, d[5] & 0x7f);
     return;
@@ -533,6 +561,7 @@ function onMessage(d) {
     if (idx >= 8) return;
     globalData.encoders[idx].fnId = d[4];
     renderGlobalControls();
+    markGlobalClean();
     return;
   }
 
@@ -541,6 +570,7 @@ function onMessage(d) {
     if (idx >= 8) return;
     globalData.buttons[idx].fnId = d[4];
     renderGlobalControls();
+    markGlobalClean();
     return;
   }
 
@@ -555,6 +585,21 @@ function onMessage(d) {
     if (preset === currentPreset) {
       const input = document.getElementById("preset-name-input");
       if (input) input.value = name;
+    }
+    return;
+  }
+
+  if (status === 0x28) {
+    const lPreset = d[3];
+    if (d.length < 9) return;
+    const labs = [d[4] & 0x07, d[5] & 0x07, d[6] & 0x07, d[7] & 0x07];
+    if (lPreset === 24) {
+      globalData.labels = labs;
+      renderGlobalControls();
+      markGlobalClean();
+    } else if (lPreset < 24) {
+      presetData[lPreset].labels = labs;
+      if (lPreset === currentPreset) { renderControls(); markClean(); }
     }
     return;
   }
@@ -583,7 +628,7 @@ function onMessage(d) {
       type: d[5],
       number: d[6],
       channel: d[7],
-      toggle: d[8] === 1,
+      pressMode: d[8] < 3 ? d[8] : 0,
       min: d.length > 9  ? d[9]  : 0,
       max: d.length > 10 ? d[10] : 127,
       name: presetData[preset].buttons[idx].name || "",
@@ -605,7 +650,84 @@ function onMessage(d) {
 
   if (preset === currentPreset) {
     renderControls();
+    markClean();
   }
+}
+
+function sendLabelConfig(preset, labels) {
+  const l = labels || [0, 0, 0, 0];
+  serialSend([0xF0, 0x6F, 0x28, preset & 0x7F,
+    (l[0] ?? 0) & 0x07, (l[1] ?? 0) & 0x07,
+    (l[2] ?? 0) & 0x07, (l[3] ?? 0) & 0x07, 0xF7]);
+}
+
+function sendFullGlobal() {
+  for (let i = 0; i < 8; i++) {
+    sendGlobalEncoder(i);
+    sendGlobalButton(i);
+  }
+  sendLabelConfig(24, globalData.labels);
+  serialSend([0xF0, 0x6F, 0x27, 0x00, 0xF7]);
+}
+
+async function saveGlobalToFile() {
+  const data = { encoders: globalData.encoders, buttons: globalData.buttons, labels: globalData.labels };
+  const jsonStr = JSON.stringify(data, null, 2);
+  const filename = "param8-global.json";
+  let saved = false;
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(jsonStr);
+      await writable.close();
+      saved = true;
+    } catch (e) {
+      if (e.name === "AbortError") return;
+      if (e.name !== "SecurityError") console.error("Save failed", e);
+    }
+  }
+  if (!saved) {
+    const url = URL.createObjectURL(new Blob([jsonStr], { type: "application/json" }));
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+
+function applyGlobalText(text) {
+  try {
+    const data = JSON.parse(text);
+    if (!data.encoders || !data.buttons) return;
+    for (let i = 0; i < 8; i++) {
+      if (data.encoders[i]) globalData.encoders[i] = { ...globalData.encoders[i], ...data.encoders[i] };
+      if (data.buttons[i])  globalData.buttons[i]  = { ...globalData.buttons[i],  ...data.buttons[i] };
+    }
+    if (Array.isArray(data.labels)) globalData.labels = data.labels.slice(0, 4);
+    markGlobalDirty();
+    renderGlobalControls();
+  } catch (err) {
+    console.error("Invalid global file", err);
+  }
+}
+
+async function loadGlobalFromPicker() {
+  if (window.showOpenFilePicker) {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ description: "JSON", accept: { "application/json": [".json"] } }],
+      });
+      applyGlobalText(await (await handle.getFile()).text());
+      return;
+    } catch (e) {
+      if (e.name === "AbortError") return;
+      if (e.name !== "SecurityError") console.error("Load failed", e);
+    }
+  }
+  document.getElementById("global-load-input").click();
 }
 
 function sendFullPreset(preset) {
@@ -617,12 +739,121 @@ function sendFullPreset(preset) {
     if (pd.buttons[i].name) sendControlName(preset, i, 1, pd.buttons[i].name);
   }
   if (pd.presetName) sendPresetName(preset, pd.presetName);
+  sendLabelConfig(preset, pd.labels);
+  serialSend([0xF0, 0x6F, 0x27, 0x00, 0xF7]);
+}
+
+const LABEL_OPTIONS = [
+  [0, "Off"],
+  [1, "Track Name"],
+  [2, "Device Name"],
+  [3, "Bank Name"],
+  [4, "Preset Name"],
+  [5, "Preset Number"],
+];
+
+function makeLabelBand(labelsArr, idxA, idxB, onChange) {
+  const band = document.createElement("div");
+  band.className = "label-band";
+  [idxA, idxB].forEach(idx => {
+    const sel = document.createElement("select");
+    sel.className = "label-select";
+    LABEL_OPTIONS.forEach(([v, t]) => {
+      const opt = document.createElement("option");
+      opt.value = v; opt.textContent = t;
+      if (v === (labelsArr[idx] ?? 0)) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener("change", () => { labelsArr[idx] = parseInt(sel.value); onChange(); });
+    band.appendChild(sel);
+  });
+  return band;
+}
+
+function cleanupDrag() {
+  if (_dragGhost) { _dragGhost.remove(); _dragGhost = null; }
+  document.querySelectorAll(".ctrl-card").forEach(c => c.classList.remove("drag-over", "dragging"));
+  _dragOverCard = null;
+  _dragSrc = -1; _dragType = null;
+  document.removeEventListener("pointermove", onPointerMove);
+  document.removeEventListener("pointerup",   onPointerUp);
+}
+function onPointerDown(e) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  const handle = e.currentTarget;
+  _dragSrc  = parseInt(handle.dataset.slot);
+  _dragType = handle.dataset.dtype;
+  handle.closest(".ctrl-card").classList.add("dragging");
+  _dragGhost = document.createElement("div");
+  _dragGhost.className = "drag-ghost";
+  _dragGhost.textContent = (_dragType === "card" ? "Card " : "Button ") + (_dragSrc + 1);
+  _dragGhost.style.left = (e.clientX + 12) + "px";
+  _dragGhost.style.top  = (e.clientY - 10) + "px";
+  document.body.appendChild(_dragGhost);
+  document.addEventListener("pointermove", onPointerMove);
+  document.addEventListener("pointerup",   onPointerUp);
+}
+function onPointerMove(e) {
+  if (_dragGhost) {
+    _dragGhost.style.left = (e.clientX + 12) + "px";
+    _dragGhost.style.top  = (e.clientY - 10) + "px";
+    _dragGhost.style.visibility = "hidden";
+  }
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (_dragGhost) _dragGhost.style.visibility = "";
+  const card = el?.closest?.(".ctrl-card");
+  if (_dragOverCard !== card) {
+    if (_dragOverCard) _dragOverCard.classList.remove("drag-over");
+    _dragOverCard = card || null;
+    if (_dragOverCard) _dragOverCard.classList.add("drag-over");
+  }
+}
+function onPointerUp(e) {
+  if (_dragGhost) _dragGhost.style.visibility = "hidden";
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (_dragGhost) _dragGhost.style.visibility = "";
+  const card = el?.closest?.(".ctrl-card");
+  if (card && _dragSrc >= 0) {
+    const dst = parseInt(card.dataset.slot);
+    if (_dragSrc !== dst) {
+      if (card.dataset.context === "global") {
+        if (_dragType === "card") {
+          const tEnc = { ...globalData.encoders[_dragSrc] };
+          globalData.encoders[_dragSrc] = { ...globalData.encoders[dst] };
+          globalData.encoders[dst] = tEnc;
+        }
+        const tBtn = { ...globalData.buttons[_dragSrc] };
+        globalData.buttons[_dragSrc] = { ...globalData.buttons[dst] };
+        globalData.buttons[dst] = tBtn;
+        markGlobalDirty();
+        renderGlobalControls();
+      } else {
+        const pd = presetData[currentPreset];
+        if (_dragType === "card") {
+          const tEnc = { ...pd.encoders[_dragSrc] };
+          pd.encoders[_dragSrc] = { ...pd.encoders[dst] };
+          pd.encoders[dst] = tEnc;
+        }
+        const tBtn = { ...pd.buttons[_dragSrc] };
+        pd.buttons[_dragSrc] = { ...pd.buttons[dst] };
+        pd.buttons[dst] = tBtn;
+        markDirty();
+        renderControls();
+      }
+    }
+  }
+  cleanupDrag();
 }
 
 function renderControls() {
   const grid = document.getElementById("controls-grid");
+  const modeUser = document.getElementById("mode-user");
+  modeUser.querySelectorAll(".label-band").forEach(b => b.remove());
   grid.innerHTML = "";
   const pd = presetData[currentPreset];
+  if (!pd.labels) pd.labels = [0, 0, 0, 0];
+  modeUser.insertBefore(makeLabelBand(pd.labels, 0, 1, markDirty), grid);
 
   for (let i = 0; i < 8; i++) {
     const enc = pd.encoders[i];
@@ -630,6 +861,8 @@ function renderControls() {
 
     const card = document.createElement("div");
     card.className = "ctrl-card";
+    card.dataset.slot = i;
+    card.dataset.context = "user";
 
     const fnTabs = (ctrl, idx, isFunc) =>
       `<div class="ctrl-fn-tabs">
@@ -670,15 +903,16 @@ function renderControls() {
            </div>
          </div>`;
 
+    const btnHandle = `<span class="drag-handle btn-drag-handle" data-slot="${i}" data-dtype="btn">⠿</span>`;
     const buttonBlock = btn.isFunction
       ? `<div class="ctrl-section ctrl-section-push">
-           <div class="ctrl-section-label">PUSH</div>
+           <div class="ctrl-section-label">${btnHandle}PUSH</div>
            ${fnTabs("btn", i, true)}
            <div class="ctrl-fields">${fnMenuHtml("btn", i, BUTTON_FUNCTION_TABLE, btn.fnId)}</div>
            <button class="ctrl-assign-all" data-ctrl="btn" data-idx="${i}">Assign to all Presets</button>
          </div>`
       : `<div class="ctrl-section ctrl-section-push">
-           <div class="ctrl-section-label">PUSH</div>
+           <div class="ctrl-section-label">${btnHandle}PUSH</div>
            ${fnTabs("btn", i, false)}
            <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
                   data-ctrl="btn" data-idx="${i}" data-field="name" class="ctrl-name">
@@ -691,24 +925,27 @@ function renderControls() {
              ${btn.type === 1 ? noteSelectHtml(btn.number, i) : numInputHtml("btn", i, btn.number)}
              <span class="ctrl-ch-label">Ch</span>
              ${channelSelectHtml("btn", i, btn.channel)}
-             <label class="toggle-label ${btn.type === 0 ? '' : 'hidden'}" data-toggle-for="${i}">
-               <input type="checkbox" ${btn.toggle ? "checked" : ""}
-                      data-ctrl="btn" data-idx="${i}" data-field="toggle">
-               Tgl
-             </label>
            </div>
            <div class="ctrl-fields ctrl-range">
+             <select data-ctrl="btn" data-idx="${i}" data-field="pressMode"
+                     class="pm-sel" ${btn.type === 2 ? 'disabled' : ''}>
+               <option value="1" ${btn.pressMode === 1 ? 'selected' : ''}>Tog.</option>
+               <option value="0" ${btn.pressMode === 0 ? 'selected' : ''}>Mom.</option>
+               <option value="2" ${btn.pressMode === 2 ? 'selected' : ''}>Trig.</option>
+             </select>
              <span class="ctrl-range-label">Min</span>
              <input type="number" min="0" max="127" value="${btn.min}"
-                    data-ctrl="btn" data-idx="${i}" data-field="min" class="ctrl-range-input">
+                    data-ctrl="btn" data-idx="${i}" data-field="min" class="ctrl-range-input"
+                    ${(btn.type === 2 || btn.pressMode === 2) ? 'disabled' : ''}>
              <span class="ctrl-range-label">Max</span>
              <input type="number" min="0" max="127" value="${btn.max}"
-                    data-ctrl="btn" data-idx="${i}" data-field="max" class="ctrl-range-input">
+                    data-ctrl="btn" data-idx="${i}" data-field="max" class="ctrl-range-input"
+                    ${btn.type === 2 ? 'disabled' : ''}>
            </div>
          </div>`;
 
     card.innerHTML = `
-      <div class="ctrl-number">${i + 1}</div>
+      <div class="ctrl-number"><span class="drag-handle card-drag-handle" data-slot="${i}" data-dtype="card">⠿</span>${i + 1}</div>
       <hr class="ctrl-separator">
       ${buttonBlock}
       ${encoderBlock}
@@ -739,8 +976,7 @@ function renderControls() {
       const isFunction = tab.dataset.val === "true";
       if (ctrl === "enc") pd.encoders[idx].isFunction = isFunction;
       else                pd.buttons[idx].isFunction  = isFunction;
-      if (ctrl === "enc") sendEncoder(currentPreset, idx);
-      else                sendButton(currentPreset, idx);
+      markDirty();
       renderControls();
     });
   });
@@ -749,9 +985,19 @@ function renderControls() {
     const pd = presetData[currentPreset];
     if (ctrl === 'enc') { pd.encoders[idx].fnId = fnId; pd.encoders[idx].name = ''; }
     else                { pd.buttons[idx].fnId  = fnId; pd.buttons[idx].name  = ''; }
-    if (ctrl === 'enc') sendEncoder(currentPreset, idx);
-    else                sendButton(currentPreset, idx);
+    markDirty();
     renderControls();
+  });
+
+  const pmAbbr  = { 0: 'Mom.', 1: 'Tog.', 2: 'Trig.' };
+  const pmFull  = { 0: 'Momentary', 1: 'Toggle', 2: 'Trigger' };
+  grid.querySelectorAll(".pm-sel").forEach(sel => {
+    sel.addEventListener("mousedown", () => {
+      [...sel.options].forEach(o => { o.text = pmFull[o.value]; });
+    });
+    sel.addEventListener("blur", () => {
+      [...sel.options].forEach(o => { o.text = pmAbbr[o.value]; });
+    });
   });
 
   grid.querySelectorAll(".ctrl-assign-all").forEach(assignBtn => {
@@ -771,6 +1017,16 @@ function renderControls() {
       serialSend([0xF0, 0x6F, 0x20, isButton, idx, src.fnId, ...nameBytes, 0xF7]);
     });
   });
+  grid.querySelectorAll(".drag-handle").forEach(h => {
+    h.addEventListener("pointerdown", onPointerDown);
+  });
+  modeUser.appendChild(makeLabelBand(pd.labels, 2, 3, markDirty));
+}
+
+function clamp127(el) {
+  const v = Math.max(0, Math.min(127, parseInt(el.value) || 0));
+  el.value = v;
+  return v;
 }
 
 function onControlChange(e) {
@@ -783,28 +1039,28 @@ function onControlChange(e) {
   if (ctrl === "enc") {
     if (field === "type") {
       pd.encoders[idx].type = parseInt(el.value);
-      sendEncoder(currentPreset, idx);
+      markDirty();
       renderControls();
       return;
     }
-    if (field === "number") pd.encoders[idx].number = parseInt(el.value);
+    if (field === "number") pd.encoders[idx].number = clamp127(el);
     if (field === "channel") pd.encoders[idx].channel = parseInt(el.value);
-    if (field === "min") pd.encoders[idx].min = Math.min(parseInt(el.value), pd.encoders[idx].max - 1);
-    if (field === "max") pd.encoders[idx].max = Math.max(parseInt(el.value), pd.encoders[idx].min + 1);
+    if (field === "min") pd.encoders[idx].min = Math.min(clamp127(el), pd.encoders[idx].max - 1);
+    if (field === "max") pd.encoders[idx].max = Math.max(clamp127(el), pd.encoders[idx].min + 1);
     if (field === "name") {
       pd.encoders[idx].name = el.value;
-      sendControlName(currentPreset, idx, 0, el.value);
+      markDirty();
       return;
     }
-    sendEncoder(currentPreset, idx);
+    markDirty();
   } else if (ctrl === "btn") {
     if (field === "type") {
       pd.buttons[idx].type = parseInt(el.value);
-      sendButton(currentPreset, idx);
+      markDirty();
       renderControls();
       return;
     }
-    if (field === "number") pd.buttons[idx].number = parseInt(el.value);
+    if (field === "number") pd.buttons[idx].number = clamp127(el);
     if (field === "note-name" || field === "note-oct") {
       const card = el.closest(".ctrl-card");
       const nameEl = card.querySelector('[data-field="note-name"]');
@@ -812,15 +1068,15 @@ function onControlChange(e) {
       pd.buttons[idx].number = noteToMidi(nameEl.value, parseInt(octEl.value));
     }
     if (field === "channel") pd.buttons[idx].channel = parseInt(el.value);
-    if (field === "toggle") pd.buttons[idx].toggle = el.checked;
-    if (field === "min") pd.buttons[idx].min = Math.min(parseInt(el.value), pd.buttons[idx].max);
-    if (field === "max") pd.buttons[idx].max = Math.max(parseInt(el.value), pd.buttons[idx].min);
+    if (field === "pressMode") { pd.buttons[idx].pressMode = parseInt(el.value); markDirty(); renderControls(); return; }
+    if (field === "min") pd.buttons[idx].min = Math.min(clamp127(el), pd.buttons[idx].max);
+    if (field === "max") pd.buttons[idx].max = Math.max(clamp127(el), pd.buttons[idx].min);
     if (field === "name") {
       pd.buttons[idx].name = el.value;
-      sendControlName(currentPreset, idx, 1, el.value);
+      markDirty();
       return;
     }
-    sendButton(currentPreset, idx);
+    markDirty();
   }
 }
 
@@ -839,7 +1095,7 @@ function sendEncoder(preset, idx) {
 function sendButton(preset, idx) {
   const btn = presetData[preset].buttons[idx];
   serialSend([0xf0, 0x6f, 0x0c, preset, idx, btn.type, btn.number, btn.channel,
-              btn.toggle ? 1 : 0, btn.min ?? 0, btn.max ?? 127,
+              btn.pressMode ?? 0, btn.min ?? 0, btn.max ?? 127,
               btn.isFunction ? 1 : 0, btn.isFunction ? btn.fnId : 0,
               0xf7]);
   if (btn.isFunction && !btn.name) {
@@ -868,7 +1124,7 @@ function sendControlName(preset, idx, isButton, name) {
 
 async function savePresetToFile() {
   const pd = presetData[currentPreset];
-  const data = { preset: currentPreset + 1, presetName: pd.presetName, encoders: pd.encoders, buttons: pd.buttons };
+  const data = { preset: currentPreset + 1, presetName: pd.presetName, encoders: pd.encoders, buttons: pd.buttons, labels: pd.labels };
   const json = JSON.stringify(data, null, 2);
   const filename = `param8-preset-${currentPreset + 1}.json`;
   let saved = false;
@@ -910,7 +1166,8 @@ function applyPresetText(text) {
       presetData[currentPreset].presetName = data.presetName;
       document.getElementById("preset-name-input").value = data.presetName || "";
     }
-    sendFullPreset(currentPreset);
+    if (Array.isArray(data.labels)) presetData[currentPreset].labels = data.labels.slice(0, 4);
+    markDirty();
     renderControls();
   } catch (err) {
     console.error("Invalid preset file", err);
@@ -979,7 +1236,7 @@ function initControllerUI() {
   const presetNameInput = document.getElementById("preset-name-input");
   presetNameInput.addEventListener("change", () => {
     presetData[currentPreset].presetName = presetNameInput.value;
-    sendPresetName(currentPreset, presetNameInput.value);
+    markDirty();
   });
 
   document.getElementById("serial-log-close").addEventListener("click", () => {
@@ -991,6 +1248,41 @@ function initControllerUI() {
     serialLogBuf = "";
   });
 
+  document.getElementById("ctrl-send").addEventListener("click", () => {
+    sendFullPreset(currentPreset);
+    markClean();
+  });
+
+  document.getElementById("global-send").addEventListener("click", () => {
+    sendFullGlobal();
+    markGlobalClean();
+  });
+  document.getElementById("global-save").addEventListener("click", saveGlobalToFile);
+  const globalLoadInput = document.getElementById("global-load-input");
+  document.getElementById("global-load").addEventListener("click", () => loadGlobalFromPicker());
+  globalLoadInput.addEventListener("change", (e) => {
+    if (e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (ev) => applyGlobalText(ev.target.result);
+      reader.readAsText(e.target.files[0]);
+      e.target.value = "";
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "u" && (e.metaKey || e.ctrlKey) && serialWriter) {
+      e.preventDefault();
+      const activeTab = document.querySelector(".main-tab.active");
+      if (activeTab && activeTab.dataset.tab === "global") {
+        sendFullGlobal();
+        markGlobalClean();
+      } else {
+        sendFullPreset(currentPreset);
+        markClean();
+      }
+    }
+  });
+
   document.getElementById("ctrl-save").addEventListener("click", savePresetToFile);
 
   document.getElementById("screensaver-select").addEventListener("change", (e) => {
@@ -999,6 +1291,10 @@ function initControllerUI() {
 
   document.getElementById("brightness-select").addEventListener("change", (e) => {
     sendBrightness(parseInt(e.target.value));
+  });
+
+  document.getElementById("leds-select").addEventListener("change", (e) => {
+    serialSend([0xf0, 0x6f, 0x29, parseInt(e.target.value), 0xf7]);
   });
 
   for (const type of ['latch', 'revert']) {
@@ -1113,6 +1409,8 @@ function sendGlobalButton(idx) {
 function renderGlobalControls() {
   const container = document.getElementById("mode-global");
   container.innerHTML = "";
+  if (!globalData.labels) globalData.labels = [0, 0, 0, 0];
+  container.appendChild(makeLabelBand(globalData.labels, 0, 1, markGlobalDirty));
 
   const grid = document.createElement("div");
   grid.className = "controls-grid global-controls-grid";
@@ -1120,11 +1418,13 @@ function renderGlobalControls() {
   for (let i = 0; i < 8; i++) {
     const card = document.createElement("div");
     card.className = "ctrl-card";
+    card.dataset.slot = i;
+    card.dataset.context = "global";
     card.innerHTML = `
-      <div class="ctrl-number">${i + 1}</div>
+      <div class="ctrl-number"><span class="drag-handle card-drag-handle" data-slot="${i}" data-dtype="card">⠿</span>${i + 1}</div>
       <hr class="ctrl-separator">
       <div class="ctrl-section ctrl-section-push">
-        <div class="ctrl-section-label">PUSH</div>
+        <div class="ctrl-section-label"><span class="drag-handle btn-drag-handle" data-slot="${i}" data-dtype="btn">⠿</span>PUSH</div>
         <div class="ctrl-fields">
           ${fnMenuHtml("gbtn", i, BUTTON_FUNCTION_TABLE, globalData.buttons[i].fnId)}
         </div>
@@ -1142,15 +1442,15 @@ function renderGlobalControls() {
   container.appendChild(grid);
 
   attachFnmListeners(grid, (ctrl, idx, fnId) => {
-    if (ctrl === 'genc') {
-      globalData.encoders[idx].fnId = fnId;
-      sendGlobalEncoder(idx);
-    } else {
-      globalData.buttons[idx].fnId = fnId;
-      sendGlobalButton(idx);
-    }
+    if (ctrl === 'genc') globalData.encoders[idx].fnId = fnId;
+    else                 globalData.buttons[idx].fnId  = fnId;
+    markGlobalDirty();
     renderGlobalControls();
   });
+  grid.querySelectorAll(".drag-handle").forEach(h => {
+    h.addEventListener("pointerdown", onPointerDown);
+  });
+  container.appendChild(makeLabelBand(globalData.labels, 2, 3, markGlobalDirty));
 }
 
 document.addEventListener('click', () => {

@@ -49,8 +49,9 @@
             <select id="preset-select" class="ctrl-ch" style="width:110px"></select>
             <span class="ctrl-ch-label">Name</span>
             <input type="text" id="preset-name-input" maxlength="19" placeholder="Preset 1">
+            <button id="ctrl-send" disabled>Send</button>
             <button id="ctrl-save">Save...</button>
-            <button id="ctrl-load">Load...</button>
+            <button id="ctrl-load">Import...</button>
             <input type="file" id="ctrl-load-input" accept=".json" class="hidden">
           </div>
           <div id="controls-grid" class="controls-grid"></div>
@@ -59,6 +60,12 @@
 
       <!-- Global tab -->
       <div id="panel-global" class="main-tab-panel hidden">
+        <div class="preset-toolbar">
+          <button id="global-send" disabled>Send</button>
+          <button id="global-save">Save...</button>
+          <button id="global-load">Import...</button>
+          <input type="file" id="global-load-input" accept=".json" class="hidden">
+        </div>
         <div id="mode-global"></div>
       </div>
 
@@ -90,6 +97,13 @@
                 <option value="0">Low</option>
                 <option value="1" selected>Mid</option>
                 <option value="2">High</option>
+              </select>
+            </div>
+            <div class="settings-row">
+              <span class="ctrl-ch-label">LEDs</span>
+              <select id="leds-select" class="ctrl-ch" style="width:64px">
+                <option value="0" selected>On</option>
+                <option value="1">Off</option>
               </select>
             </div>
             <div class="settings-row">
