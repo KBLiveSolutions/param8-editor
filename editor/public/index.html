@@ -121,16 +121,16 @@
             </div>
           </div>
           <div class="settings-card">
-            <span class="settings-card-title">Slew</span>
+            <span class="settings-card-title">Smooth</span>
             <div class="settings-row">
               <span class="ctrl-ch-label">Latch</span>
-              <div class="slew-ctrl" id="latch-slew-ctrl">
-                <button class="slew-mode-btn" id="latch-slew-mode">Time</button>
-                <div class="slew-time-part" id="latch-slew-time-part">
-                  <input type="range" id="latch-slew-level" min="0" max="127" value="0">
-                  <span class="slew-val" id="latch-slew-val">Off</span>
+              <div class="smooth-ctrl" id="latch-smooth-ctrl">
+                <button class="smooth-mode-btn" id="latch-smooth-mode">Time</button>
+                <div class="smooth-time-part" id="latch-smooth-time-part">
+                  <input type="range" id="latch-smooth-level" min="0" max="127" value="0">
+                  <span class="smooth-val" id="latch-smooth-val">Off</span>
                 </div>
-                <select id="latch-slew-step" class="ctrl-ch hidden" style="width:62px">
+                <select id="latch-smooth-step" class="ctrl-ch hidden" style="width:62px">
                   <option value="0">1/16</option>
                   <option value="1">1/8</option>
                   <option value="2" selected>1/4</option>
@@ -144,13 +144,13 @@
             </div>
             <div class="settings-row">
               <span class="ctrl-ch-label">Revert</span>
-              <div class="slew-ctrl" id="revert-slew-ctrl">
-                <button class="slew-mode-btn" id="revert-slew-mode">Time</button>
-                <div class="slew-time-part" id="revert-slew-time-part">
-                  <input type="range" id="revert-slew-level" min="0" max="127" value="0">
-                  <span class="slew-val" id="revert-slew-val">Off</span>
+              <div class="smooth-ctrl" id="revert-smooth-ctrl">
+                <button class="smooth-mode-btn" id="revert-smooth-mode">Time</button>
+                <div class="smooth-time-part" id="revert-smooth-time-part">
+                  <input type="range" id="revert-smooth-level" min="0" max="127" value="0">
+                  <span class="smooth-val" id="revert-smooth-val">Off</span>
                 </div>
-                <select id="revert-slew-step" class="ctrl-ch hidden" style="width:62px">
+                <select id="revert-smooth-step" class="ctrl-ch hidden" style="width:62px">
                   <option value="0">1/16</option>
                   <option value="1">1/8</option>
                   <option value="2" selected>1/4</option>

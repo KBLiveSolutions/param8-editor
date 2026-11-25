@@ -341,7 +341,7 @@ async function connectSerial(port) {
     requestPreset(currentPreset);
     requestGlobal();
     requestVersion();
-    requestSlew();
+    requestSmooth();
     retryRequestTimeout = setTimeout(() => {
       if (presetData[currentPreset].encoders[0].number === 0 &&
           presetData[currentPreset].encoders[0].name === "") {
@@ -547,12 +547,12 @@ function onMessage(d) {
   }
 
   if (status === 0x24) {
-    updateSlewUI('latch', d[3] & 0x7f, d[4] & 0x7f, d[5] & 0x7f);
+    updateSmoothUI('latch', d[3] & 0x7f, d[4] & 0x7f, d[5] & 0x7f);
     return;
   }
 
   if (status === 0x25) {
-    updateSlewUI('revert', d[3] & 0x7f, d[4] & 0x7f, d[5] & 0x7f);
+    updateSmoothUI('revert', d[3] & 0x7f, d[4] & 0x7f, d[5] & 0x7f);
     return;
   }
 
@@ -1298,28 +1298,28 @@ function initControllerUI() {
   });
 
   for (const type of ['latch', 'revert']) {
-    document.getElementById(`${type}-slew-mode`).addEventListener("click", () => {
-      const btn = document.getElementById(`${type}-slew-mode`);
+    document.getElementById(`${type}-smooth-mode`).addEventListener("click", () => {
+      const btn = document.getElementById(`${type}-smooth-mode`);
       const syncMode = btn.textContent !== 'Sync';
-      const level = parseInt(document.getElementById(`${type}-slew-level`).value);
-      const syncStep = parseInt(document.getElementById(`${type}-slew-step`).value);
-      updateSlewUI(type, level, syncMode ? 1 : 0, syncStep);
-      type === 'latch' ? sendLatchSlew(level, syncMode, syncStep) : sendRevertSlew(level, syncMode, syncStep);
+      const level = parseInt(document.getElementById(`${type}-smooth-level`).value);
+      const syncStep = parseInt(document.getElementById(`${type}-smooth-step`).value);
+      updateSmoothUI(type, level, syncMode ? 1 : 0, syncStep);
+      type === 'latch' ? sendLatchSmooth(level, syncMode, syncStep) : sendRevertSmooth(level, syncMode, syncStep);
     });
 
-    document.getElementById(`${type}-slew-level`).addEventListener("input", (e) => {
-      document.getElementById(`${type}-slew-val`).textContent = formatSlewTime(parseInt(e.target.value));
+    document.getElementById(`${type}-smooth-level`).addEventListener("input", (e) => {
+      document.getElementById(`${type}-smooth-val`).textContent = formatSmoothTime(parseInt(e.target.value));
     });
 
-    document.getElementById(`${type}-slew-level`).addEventListener("change", (e) => {
+    document.getElementById(`${type}-smooth-level`).addEventListener("change", (e) => {
       const level = parseInt(e.target.value);
-      const syncStep = parseInt(document.getElementById(`${type}-slew-step`).value);
-      type === 'latch' ? sendLatchSlew(level, false, syncStep) : sendRevertSlew(level, false, syncStep);
+      const syncStep = parseInt(document.getElementById(`${type}-smooth-step`).value);
+      type === 'latch' ? sendLatchSmooth(level, false, syncStep) : sendRevertSmooth(level, false, syncStep);
     });
 
-    document.getElementById(`${type}-slew-step`).addEventListener("change", (e) => {
-      const level = parseInt(document.getElementById(`${type}-slew-level`).value);
-      type === 'latch' ? sendLatchSlew(level, true, parseInt(e.target.value)) : sendRevertSlew(level, true, parseInt(e.target.value));
+    document.getElementById(`${type}-smooth-step`).addEventListener("change", (e) => {
+      const level = parseInt(document.getElementById(`${type}-smooth-level`).value);
+      type === 'latch' ? sendLatchSmooth(level, true, parseInt(e.target.value)) : sendRevertSmooth(level, true, parseInt(e.target.value));
     });
   }
 
@@ -1351,38 +1351,38 @@ function requestGlobal() {
   serialSend([0xf0, 0x6f, 0x1e, 0x00, 0xf7]);
 }
 
-function requestSlew() {
+function requestSmooth() {
   serialSend([0xf0, 0x6f, 0x26, 0x00, 0xf7]);
 }
 
-function formatSlewTime(level) {
+function formatSmoothTime(level) {
   if (level === 0) return 'Off';
   const ms = Math.round(100 * Math.pow(590, (level - 1) / 126));
   if (ms < 1000) return ms + 'ms';
   return (ms / 1000).toFixed(1) + 's';
 }
 
-function updateSlewUI(type, level, syncMode, syncStep) {
-  const btn      = document.getElementById(`${type}-slew-mode`);
-  const timePart = document.getElementById(`${type}-slew-time-part`);
-  const stepSel  = document.getElementById(`${type}-slew-step`);
-  const levelIn  = document.getElementById(`${type}-slew-level`);
-  const valSpan  = document.getElementById(`${type}-slew-val`);
+function updateSmoothUI(type, level, syncMode, syncStep) {
+  const btn      = document.getElementById(`${type}-smooth-mode`);
+  const timePart = document.getElementById(`${type}-smooth-time-part`);
+  const stepSel  = document.getElementById(`${type}-smooth-step`);
+  const levelIn  = document.getElementById(`${type}-smooth-level`);
+  const valSpan  = document.getElementById(`${type}-smooth-val`);
   const isSync   = syncMode !== 0;
   btn.textContent = isSync ? 'Sync' : 'Time';
   btn.classList.toggle('active', isSync);
   timePart.classList.toggle('hidden', isSync);
   stepSel.classList.toggle('hidden', !isSync);
   levelIn.value = String(level);
-  valSpan.textContent = formatSlewTime(level);
+  valSpan.textContent = formatSmoothTime(level);
   stepSel.value = String(syncStep);
 }
 
-function sendLatchSlew(level, syncMode, syncStep) {
+function sendLatchSmooth(level, syncMode, syncStep) {
   serialSend([0xf0, 0x6f, 0x24, level & 0x7f, syncMode ? 1 : 0, syncStep & 0x7f, 0xf7]);
 }
 
-function sendRevertSlew(level, syncMode, syncStep) {
+function sendRevertSmooth(level, syncMode, syncStep) {
   serialSend([0xf0, 0x6f, 0x25, level & 0x7f, syncMode ? 1 : 0, syncStep & 0x7f, 0xf7]);
 }
 
