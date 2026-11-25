@@ -47,6 +47,8 @@ const BUTTON_FUNCTION_TABLE = [
   // Navigation (fnIds match CCs expected by component layers)
   { id: 31, label: 'Preset +',          group: 'Navigation' },
   { id: 30, label: 'Preset -',          group: 'Navigation' },
+  // Go to Preset 1-24 (fnIds 120-143)
+  ...Array.from({ length: 24 }, (_, i) => ({ id: 120 + i, label: `Preset ${i + 1}`, group: 'Navigation', subgroup: 'Go to Preset' })),
 ];
 
 const ENCODER_FUNCTION_TABLE = [
