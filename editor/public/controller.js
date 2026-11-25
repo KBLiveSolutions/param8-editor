@@ -39,7 +39,7 @@ const BUTTON_FUNCTION_TABLE = [
   { id: 26, label: 'Bank -',            group: 'Device' },
   { id: 23, label: 'Compare A/B',       group: 'Device' },
   { id: 22, label: 'Device On',       group: 'Device' },
-  // { id: 36, label: 'Prev Variation',    group: 'Device' },
+  { id: 36, label: 'Device Lock',       group: 'Device' },
   // { id: 37, label: 'Next Variation',    group: 'Device' },
   // { id: 38, label: 'Launch Variation',  group: 'Device' },
   // { id: 39, label: 'Store Variation',   group: 'Device' },
@@ -544,6 +544,12 @@ function onMessage(d) {
 
   if (status === 0x29) {
     const select = document.getElementById("leds-select");
+    if (select) select.value = String(d[3] & 0x01);
+    return;
+  }
+
+  if (status === 0x2A) {
+    const select = document.getElementById("devlock-select");
     if (select) select.value = String(d[3] & 0x01);
     return;
   }
@@ -1297,6 +1303,10 @@ function initControllerUI() {
 
   document.getElementById("leds-select").addEventListener("change", (e) => {
     serialSend([0xf0, 0x6f, 0x29, parseInt(e.target.value), 0xf7]);
+  });
+
+  document.getElementById("devlock-select").addEventListener("change", (e) => {
+    serialSend([0xf0, 0x6f, 0x2a, parseInt(e.target.value), 0xf7]);
   });
 
   for (const type of ['latch', 'revert']) {
