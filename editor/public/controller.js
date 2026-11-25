@@ -260,7 +260,7 @@ function attachFnmListeners(container, onItemSelect) {
 }
 
 for (let p = 0; p < 24; p++) {
-  presetData[p] = { encoders: [], buttons: [], presetName: "", labels: [0, 0, 0, 0] };
+  presetData[p] = { encoders: [], buttons: [], presetName: "", labels: [0, 0, 5, 4] };
   for (let i = 0; i < 8; i++) {
     presetData[p].encoders[i] = { type: 0, number: 0, channel: 0, min: 0, max: 127, name: "", isFunction: false, fnId: 55};
     presetData[p].buttons[i]  = { type: 0, number: 0, channel: 0, pressMode: 0, min: 0, max: 127, name: "", isFunction: false, fnId: 1 };
@@ -270,7 +270,7 @@ for (let p = 0; p < 24; p++) {
 let globalData = {
   encoders: Array.from({ length: 8 }, (_, i) => ({ fnId: 40 + i })),
   buttons:  Array.from({ length: 8 }, (_, i) => ({ fnId: 50 + i })),
-  labels: [0, 0, 0, 0],
+  labels: [1, 0, 2, 4],
 };
 
 function updateSendButton() {
