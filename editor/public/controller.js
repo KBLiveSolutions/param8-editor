@@ -276,12 +276,41 @@ let globalData = {
   labels: [1, 0, 2, 4],
 };
 
+function fwSupportsLabels() {
+  return !currentFirmwareVersion || compareVersions(currentFirmwareVersion, "1.1.0") >= 0;
+}
+
 function updateSendButton() {
   const connected = !!serialWriter;
+  const fwOk = !currentFirmwareVersion || compareVersions(currentFirmwareVersion, "1.1.0") >= 0;
+  const canSend = connected && fwOk;
+  const oldFw = connected && !fwOk;
   const btn = document.getElementById("ctrl-send");
-  if (btn) { btn.disabled = !connected; btn.classList.toggle("primary", connected && presetDirty); }
+  if (btn) {
+    btn.classList.toggle("hidden", oldFw);
+    btn.disabled = !canSend;
+    btn.classList.toggle("primary", canSend && presetDirty);
+  }
   const gbtn = document.getElementById("global-send");
-  if (gbtn) { gbtn.disabled = !connected; gbtn.classList.toggle("primary", connected && globalDirty); }
+  if (gbtn) {
+    gbtn.classList.toggle("hidden", oldFw);
+    gbtn.disabled = !canSend;
+    gbtn.classList.toggle("primary", canSend && globalDirty);
+  }
+}
+
+function autoSendControl(ctrl, idx, name) {
+  if (fwSupportsLabels()) return;
+  if (!serialWriter) return;
+  if (name !== undefined) {
+    const isButton = ctrl === "btn" || ctrl === "gbtn";
+    sendControlName(ctrl === "genc" || ctrl === "gbtn" ? 24 : currentPreset, idx, isButton ? 1 : 0, name);
+    return;
+  }
+  if (ctrl === "enc") sendEncoder(currentPreset, idx);
+  else if (ctrl === "btn") sendButton(currentPreset, idx);
+  else if (ctrl === "genc") sendGlobalEncoder(idx);
+  else if (ctrl === "gbtn") sendGlobalButton(idx);
 }
 
 function markDirty() { presetDirty = true; updateSendButton(); }
@@ -470,6 +499,14 @@ function updateFirmwareVersionUI() {
       textEl.textContent = `Update available: v${latestFirmwareInfo.version}`;
       downloadLink.href = `https://github.com/${FW_REPO}/releases/download/v${latestFirmwareInfo.version}/${latestFirmwareInfo.file}`;
       downloadLink.setAttribute("download", latestFirmwareInfo.file);
+      const scriptRow = document.getElementById("fw-script-row");
+      const scriptBtn = document.getElementById("fw-script-download");
+      if (scriptRow && scriptBtn && latestFirmwareInfo.scriptUrl) {
+        scriptBtn.onclick = () => window.open(latestFirmwareInfo.scriptUrl, "_blank");
+        scriptRow.classList.remove("hidden");
+      } else if (scriptRow) {
+        scriptRow.classList.add("hidden");
+      }
       banner.classList.remove("hidden");
       return;
     }
@@ -514,6 +551,9 @@ function onMessage(d) {
     currentFirmwareVersion = `${d[3]}.${d[4]}.${d[5]}`;
     updateFirmwareVersionUI();
     updateScriptVersionUI();
+    updateSendButton();
+    renderControls();
+    renderGlobalControls();
     return;
   }
 
@@ -864,7 +904,7 @@ function renderControls() {
   grid.innerHTML = "";
   const pd = presetData[currentPreset];
   if (!pd.labels) pd.labels = [0, 0, 0, 0];
-  modeUser.insertBefore(makeLabelBand(pd.labels, 0, 1, markDirty), grid);
+  if (fwSupportsLabels()) modeUser.insertBefore(makeLabelBand(pd.labels, 0, 1, markDirty), grid);
 
   for (let i = 0; i < 8; i++) {
     const enc = pd.encoders[i];
@@ -987,7 +1027,7 @@ function renderControls() {
       const isFunction = tab.dataset.val === "true";
       if (ctrl === "enc") pd.encoders[idx].isFunction = isFunction;
       else                pd.buttons[idx].isFunction  = isFunction;
-      markDirty();
+      markDirty(); autoSendControl(ctrl, idx);
       renderControls();
     });
   });
@@ -996,7 +1036,7 @@ function renderControls() {
     const pd = presetData[currentPreset];
     if (ctrl === 'enc') { pd.encoders[idx].fnId = fnId; pd.encoders[idx].name = ''; }
     else                { pd.buttons[idx].fnId  = fnId; pd.buttons[idx].name  = ''; }
-    markDirty();
+    markDirty(); autoSendControl(ctrl, idx);
     renderControls();
   });
 
@@ -1031,7 +1071,7 @@ function renderControls() {
   grid.querySelectorAll(".drag-handle").forEach(h => {
     h.addEventListener("pointerdown", onPointerDown);
   });
-  modeUser.appendChild(makeLabelBand(pd.labels, 2, 3, markDirty));
+  if (fwSupportsLabels()) modeUser.appendChild(makeLabelBand(pd.labels, 2, 3, markDirty));
 }
 
 function clamp127(el) {
@@ -1050,7 +1090,7 @@ function onControlChange(e) {
   if (ctrl === "enc") {
     if (field === "type") {
       pd.encoders[idx].type = parseInt(el.value);
-      markDirty();
+      markDirty(); autoSendControl(ctrl, idx);
       renderControls();
       return;
     }
@@ -1060,14 +1100,14 @@ function onControlChange(e) {
     if (field === "max") pd.encoders[idx].max = Math.max(clamp127(el), pd.encoders[idx].min + 1);
     if (field === "name") {
       pd.encoders[idx].name = el.value;
-      markDirty();
+      markDirty(); autoSendControl(ctrl, idx, el.value);
       return;
     }
-    markDirty();
+    markDirty(); autoSendControl(ctrl, idx);
   } else if (ctrl === "btn") {
     if (field === "type") {
       pd.buttons[idx].type = parseInt(el.value);
-      markDirty();
+      markDirty(); autoSendControl(ctrl, idx);
       renderControls();
       return;
     }
@@ -1079,15 +1119,15 @@ function onControlChange(e) {
       pd.buttons[idx].number = noteToMidi(nameEl.value, parseInt(octEl.value));
     }
     if (field === "channel") pd.buttons[idx].channel = parseInt(el.value);
-    if (field === "pressMode") { pd.buttons[idx].pressMode = parseInt(el.value); markDirty(); renderControls(); return; }
+    if (field === "pressMode") { pd.buttons[idx].pressMode = parseInt(el.value); markDirty(); autoSendControl(ctrl, idx); renderControls(); return; }
     if (field === "min") pd.buttons[idx].min = Math.min(clamp127(el), pd.buttons[idx].max);
     if (field === "max") pd.buttons[idx].max = Math.max(clamp127(el), pd.buttons[idx].min);
     if (field === "name") {
       pd.buttons[idx].name = el.value;
-      markDirty();
+      markDirty(); autoSendControl(ctrl, idx, el.value);
       return;
     }
-    markDirty();
+    markDirty(); autoSendControl(ctrl, idx);
   }
 }
 
@@ -1425,7 +1465,7 @@ function renderGlobalControls() {
   const container = document.getElementById("mode-global");
   container.innerHTML = "";
   if (!globalData.labels) globalData.labels = [0, 0, 0, 0];
-  container.appendChild(makeLabelBand(globalData.labels, 0, 1, markGlobalDirty));
+  if (fwSupportsLabels()) container.appendChild(makeLabelBand(globalData.labels, 0, 1, markGlobalDirty));
 
   const grid = document.createElement("div");
   grid.className = "controls-grid global-controls-grid";
@@ -1459,13 +1499,13 @@ function renderGlobalControls() {
   attachFnmListeners(grid, (ctrl, idx, fnId) => {
     if (ctrl === 'genc') globalData.encoders[idx].fnId = fnId;
     else                 globalData.buttons[idx].fnId  = fnId;
-    markGlobalDirty();
+    markGlobalDirty(); autoSendControl(ctrl, idx);
     renderGlobalControls();
   });
   grid.querySelectorAll(".drag-handle").forEach(h => {
     h.addEventListener("pointerdown", onPointerDown);
   });
-  container.appendChild(makeLabelBand(globalData.labels, 2, 3, markGlobalDirty));
+  if (fwSupportsLabels()) container.appendChild(makeLabelBand(globalData.labels, 2, 3, markGlobalDirty));
 }
 
 document.addEventListener('click', () => {

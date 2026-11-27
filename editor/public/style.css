@@ -424,7 +424,7 @@ button:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 }
 
 #fw-update-banner {
-  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  display: flex; flex-direction: column; gap: 8px;
   margin: 12px 24px 0;
   padding: 12px 16px;
   background: var(--bg-surface);
@@ -433,17 +433,24 @@ button:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
   font-size: 13px;
 }
 #fw-update-text { font-weight: 600; color: var(--text-bright); }
-#fw-update-download {
-  padding: 6px 14px;
+.fw-update-row {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+}
+#fw-update-download, #fw-script-download {
+  padding: 5px 12px;
   background: var(--accent-bg);
   color: #000;
   text-decoration: none;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   border-radius: var(--radius);
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
-#fw-update-download:hover { background: var(--accent-hover); }
-#fw-update-instructions { color: var(--text-muted); }
+#fw-update-download:hover, #fw-script-download:hover { background: var(--accent-hover); }
+.fw-update-instructions { color: var(--text-muted); }
 
 #script-update-banner {
   display: flex; align-items: center; gap: 12px;
@@ -453,6 +460,17 @@ button:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
   border: 1px solid #c8860a;
   border-radius: var(--radius-lg);
   font-size: 13px;
+  font-weight: 600;
+  color: #e8a020;
+}
+
+.send-fw-warning {
+  margin: 6px 24px 0;
+  padding: 8px 14px;
+  background: var(--bg-surface);
+  border: 1px solid #c8860a;
+  border-radius: var(--radius-lg);
+  font-size: 12px;
   font-weight: 600;
   color: #e8a020;
 }

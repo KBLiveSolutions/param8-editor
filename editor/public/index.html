@@ -34,8 +34,14 @@
       <!-- Update banners (always visible when relevant) -->
       <div id="fw-update-banner" class="hidden">
         <span id="fw-update-text"></span>
-        <a id="fw-update-download" href="#" download>Download update</a>
-        <span id="fw-update-instructions">Hold Shift, plug in the USB cable, then drag and drop the .uf2 file onto the RPI-RP2 drive.</span>
+        <div class="fw-update-row">
+          <a id="fw-update-download" href="#" download>Download firmware update</a>
+          <span class="fw-update-instructions">Hold Shift, plug in the USB cable, then drag and drop the .uf2 file onto the RPI-RP2 drive.</span>
+        </div>
+        <div id="fw-script-row" class="fw-update-row hidden">
+          <button id="fw-script-download">Download script update</button>
+          <span class="fw-update-instructions">Unzip and replace the <strong>param8</strong> folder in your Ableton Live Remote Scripts directory, then restart Live.</span>
+        </div>
       </div>
       <div id="script-update-banner" class="hidden">
         <span>The Ableton script is outdated. Please update it to match the firmware version.</span>
@@ -107,7 +113,7 @@
               </select>
             </div>
             <div class="settings-row">
-              <span class="ctrl-ch-label">Dev.Lock</span>
+              <span class="ctrl-ch-label">Device Lock</span>
               <select id="devlock-select" class="ctrl-ch" style="width:64px">
                 <option value="0" selected>Free</option>
                 <option value="1">Follow</option>
