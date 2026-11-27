@@ -123,6 +123,9 @@ function hexStr(bytes) {
 
 const FW_REPO = "kblivesolutions/param8-firmware";
 const FW_BRANCH = "main";
+
+const ICON_TURN = `<span style="display:inline-block;transform:rotate(180deg);vertical-align:middle;margin-right:4px;font-size:15px;opacity:0.7;line-height:1">↻</span>`;
+const ICON_PUSH = `<svg width="10" height="10" viewBox="0 0 13 13" fill="none" style="vertical-align:middle;margin-right:4px;opacity:0.7"><path d="M6.5 1.5v7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M3.5 8.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 12h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
 const FW_MANIFEST_URL = `https://raw.githubusercontent.com/${FW_REPO}/${FW_BRANCH}/manifest.json`;
 
 let currentFirmwareVersion = null;
@@ -880,13 +883,13 @@ function renderControls() {
 
     const encoderBlock = enc.isFunction
       ? `<div class="ctrl-section">
-           <div class="ctrl-section-label">TURN</div>
+           <div class="ctrl-section-label">${ICON_TURN}TURN</div>
            ${fnTabs("enc", i, true)}
            <div class="ctrl-fields">${fnMenuHtml("enc", i, ENCODER_FUNCTION_TABLE, enc.fnId)}</div>
            <button class="ctrl-assign-all" data-ctrl="enc" data-idx="${i}">Assign to all Presets</button>
          </div>`
       : `<div class="ctrl-section">
-           <div class="ctrl-section-label">TURN</div>
+           <div class="ctrl-section-label">${ICON_TURN}TURN</div>
            ${fnTabs("enc", i, false)}
            <input type="text" maxlength="11" value="${enc.name}" placeholder="Name"
                   data-ctrl="enc" data-idx="${i}" data-field="name" class="ctrl-name">
@@ -914,13 +917,13 @@ function renderControls() {
     const btnHandle = `<span class="drag-handle btn-drag-handle" data-slot="${i}" data-dtype="btn">⠿</span>`;
     const buttonBlock = btn.isFunction
       ? `<div class="ctrl-section ctrl-section-push">
-           <div class="ctrl-section-label">${btnHandle}PUSH</div>
+           <div class="ctrl-section-label">${btnHandle}${ICON_PUSH}PUSH</div>
            ${fnTabs("btn", i, true)}
            <div class="ctrl-fields">${fnMenuHtml("btn", i, BUTTON_FUNCTION_TABLE, btn.fnId)}</div>
            <button class="ctrl-assign-all" data-ctrl="btn" data-idx="${i}">Assign to all Presets</button>
          </div>`
       : `<div class="ctrl-section ctrl-section-push">
-           <div class="ctrl-section-label">${btnHandle}PUSH</div>
+           <div class="ctrl-section-label">${btnHandle}${ICON_PUSH}PUSH</div>
            ${fnTabs("btn", i, false)}
            <input type="text" maxlength="11" value="${btn.name}" placeholder="Name"
                   data-ctrl="btn" data-idx="${i}" data-field="name" class="ctrl-name">
@@ -1436,13 +1439,13 @@ function renderGlobalControls() {
       <div class="ctrl-number"><span class="drag-handle card-drag-handle" data-slot="${i}" data-dtype="card">⠿</span>${i + 1}</div>
       <hr class="ctrl-separator">
       <div class="ctrl-section ctrl-section-push">
-        <div class="ctrl-section-label"><span class="drag-handle btn-drag-handle" data-slot="${i}" data-dtype="btn">⠿</span>PUSH</div>
+        <div class="ctrl-section-label"><span class="drag-handle btn-drag-handle" data-slot="${i}" data-dtype="btn">⠿</span>${ICON_PUSH}PUSH</div>
         <div class="ctrl-fields">
           ${fnMenuHtml("gbtn", i, BUTTON_FUNCTION_TABLE, globalData.buttons[i].fnId)}
         </div>
       </div>
       <div class="ctrl-section">
-        <div class="ctrl-section-label">TURN</div>
+        <div class="ctrl-section-label">${ICON_TURN}TURN</div>
         <div class="ctrl-fields">
           ${fnMenuHtml("genc", i, ENCODER_FUNCTION_TABLE, globalData.encoders[i].fnId)}
         </div>
