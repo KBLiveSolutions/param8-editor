@@ -1,0 +1,425 @@
+<style>
+  html { zoom: 0.82; }
+  #__close-btn {
+    position: fixed;
+    top: 10px;
+    right: 12px;
+    z-index: 99999;
+    padding: 4px 12px;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 4px;
+    background: rgba(0,0,0,0.4);
+    color: rgba(255,255,255,0.7);
+    font-size: 11px;
+    font-family: sans-serif;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  #__close-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  #__p8modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.65);
+    z-index: 999998;
+    align-items: center;
+    justify-content: center;
+    font-family: sans-serif;
+  }
+  #__p8modal.open { display: flex; }
+  #__p8modal-panel {
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 20px 24px;
+    min-width: 340px;
+    max-width: 460px;
+    width: 90%;
+  }
+  #__p8modal-title {
+    color: #eee;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    letter-spacing: 0.03em;
+  }
+  #__p8modal-body { color: #aaa; font-size: 12px; }
+  #__p8modal-body input[type=text] {
+    width: 100%;
+    box-sizing: border-box;
+    background: #111;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #eee;
+    font-size: 12px;
+    padding: 6px 8px;
+    margin-top: 6px;
+    outline: none;
+  }
+  #__p8modal-body input[type=text]:focus { border-color: #888; }
+  #__p8modal-hint {
+    color: #666;
+    font-size: 11px;
+    margin-top: 6px;
+  }
+  #__p8modal-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 8px;
+    border: 1px solid #333;
+    border-radius: 4px;
+  }
+  #__p8modal-list div {
+    padding: 7px 10px;
+    cursor: pointer;
+    color: #ccc;
+    font-size: 12px;
+    border-bottom: 1px solid #2a2a2a;
+  }
+  #__p8modal-list div:last-child { border-bottom: none; }
+  #__p8modal-list div:hover { background: #2e2e2e; color: #fff; }
+  #__p8modal-list .empty { color: #555; font-style: italic; cursor: default; }
+  #__p8modal-list .empty:hover { background: none; }
+  #__p8modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  #__p8modal-footer button {
+    padding: 6px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #555;
+    background: #2a2a2a;
+    color: #ccc;
+    transition: background 0.1s;
+  }
+  #__p8modal-footer button:hover { background: #3a3a3a; color: #fff; }
+  #__p8modal-ok { background: #2a4a2a !important; border-color: #4a7a4a !important; color: #9f9 !important; }
+  #__p8modal-ok:hover { background: #355035 !important; }
+</style>
+<script>
+(function () {
+  'use strict';
+
+  var wsUrl = 'ws://' + location.host;
+  var ws = null;
+  var wsOpen = false;
+  var wsConnectPromise = null;
+  var readListeners = [];
+  var detectedPortPath = null;
+
+  function wsConnect() {
+    if (ws && wsOpen) return Promise.resolve();
+    if (wsConnectPromise) return wsConnectPromise;
+    wsConnectPromise = new Promise(function (resolve) {
+      ws = new WebSocket(wsUrl);
+      ws.addEventListener('open', function () { wsOpen = true; wsConnectPromise = null; resolve(); });
+      ws.addEventListener('close', function () { wsOpen = false; ws = null; wsConnectPromise = null; });
+      ws.addEventListener('message', function (e) {
+        try {
+          var msg = JSON.parse(e.data);
+          if (msg.type === 'data') {
+            var bytes = new Uint8Array(msg.bytes);
+            readListeners.forEach(function (l) { l(bytes); });
+          }
+        } catch (_) {}
+      });
+    });
+    return wsConnectPromise;
+  }
+
+  function wsSend(msg) {
+    if (ws && wsOpen) ws.send(JSON.stringify(msg));
+  }
+
+  // ── File modal ────────────────────────────────────────────────────────────────
+  var _modalResolve = null;
+  var _modalReject  = null;
+  var _presetsDir   = '';
+
+  function buildModal() {
+    var el = document.createElement('div');
+    el.id = '__p8modal';
+    el.innerHTML =
+      '<div id="__p8modal-panel">' +
+        '<div id="__p8modal-title"></div>' +
+        '<div id="__p8modal-body"></div>' +
+        '<div id="__p8modal-hint"></div>' +
+        '<div id="__p8modal-footer">' +
+          '<button id="__p8modal-cancel">Cancel</button>' +
+          '<button id="__p8modal-ok" style="display:none">Save</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(el);
+    document.getElementById('__p8modal-cancel').addEventListener('click', function () {
+      dismissModal();
+      if (_modalReject) _modalReject(new DOMException('', 'AbortError'));
+    });
+    el.addEventListener('click', function (e) {
+      if (e.target === el) {
+        dismissModal();
+        if (_modalReject) _modalReject(new DOMException('', 'AbortError'));
+      }
+    });
+  }
+
+  function dismissModal() {
+    var el = document.getElementById('__p8modal');
+    if (el) el.classList.remove('open');
+    _modalResolve = null;
+    _modalReject  = null;
+  }
+
+  function showSaveModal(suggestedName, presetsDir) {
+    return wsConnect().then(function () {
+      return new Promise(function (resolve, reject) {
+        _modalResolve = resolve;
+        _modalReject  = reject;
+        var modal = document.getElementById('__p8modal');
+        document.getElementById('__p8modal-title').textContent = 'Save Preset';
+        var body = document.getElementById('__p8modal-body');
+        body.innerHTML = '<label style="color:#aaa;font-size:11px;">File name</label><input type="text" id="__p8modal-input" />';
+        var input = document.getElementById('__p8modal-input');
+        input.value = suggestedName;
+        document.getElementById('__p8modal-hint').textContent = 'Saves to: ' + presetsDir;
+        var okBtn = document.getElementById('__p8modal-ok');
+        okBtn.textContent = 'Save';
+        okBtn.style.display = '';
+        okBtn.onclick = function () {
+          var name = input.value.trim() || suggestedName;
+          dismissModal();
+          resolve(name);
+        };
+        input.onkeydown = function (e) { if (e.key === 'Enter') okBtn.click(); };
+        modal.classList.add('open');
+        setTimeout(function () { input.select(); input.focus(); }, 50);
+      });
+    });
+  }
+
+  function showLoadModal(presetsDir) {
+    return wsConnect().then(function () {
+      return fetch('/api/presets').then(function (r) { return r.json(); }).then(function (data) {
+        _presetsDir = data.dir || presetsDir;
+        var files = data.presets || [];
+        return new Promise(function (resolve, reject) {
+          _modalResolve = resolve;
+          _modalReject  = reject;
+          var modal = document.getElementById('__p8modal');
+          document.getElementById('__p8modal-title').textContent = 'Load Preset';
+          var body = document.getElementById('__p8modal-body');
+          var listHtml = '<div id="__p8modal-list">';
+          if (files.length === 0) {
+            listHtml += '<div class="empty">No presets found in ' + _presetsDir + '</div>';
+          } else {
+            files.forEach(function (f) {
+              listHtml += '<div data-file="' + f + '">' + f + '</div>';
+            });
+          }
+          listHtml += '</div>';
+          body.innerHTML = listHtml;
+          document.getElementById('__p8modal-hint').textContent = 'From: ' + _presetsDir;
+          document.getElementById('__p8modal-ok').style.display = 'none';
+          document.getElementById('__p8modal-list').addEventListener('click', function (e) {
+            var target = e.target;
+            var file = target.dataset && target.dataset.file;
+            if (!file) return;
+            dismissModal();
+            resolve(file);
+          });
+          modal.classList.add('open');
+        });
+      });
+    });
+  }
+
+  // ── Override showSaveFilePicker / showOpenFilePicker ──────────────────────────
+  window.showSaveFilePicker = function (opts) {
+    var suggestedName = (opts && opts.suggestedName) || 'preset.json';
+    return wsConnect().then(function () {
+      return fetch('/api/presets').then(function (r) { return r.json(); }).then(function (data) {
+        var dir = data.dir || '';
+        return showSaveModal(suggestedName, dir);
+      });
+    }).then(function (chosenName) {
+      var chunks = [];
+      var writable = {
+        write: function (d) {
+          chunks.push(typeof d === 'string' ? d : new TextDecoder().decode(d));
+          return Promise.resolve();
+        },
+        close: function () {
+          return new Promise(function (resolve, reject) {
+            function onMsg(e) {
+              try {
+                var m = JSON.parse(e.data);
+                if (m.type === 'fileSaved')     { ws.removeEventListener('message', onMsg); resolve(); }
+                if (m.type === 'fileSaveError') { ws.removeEventListener('message', onMsg); reject(new Error(m.error)); }
+              } catch (_) {}
+            }
+            ws.addEventListener('message', onMsg);
+            wsSend({ cmd: 'saveFile', filename: chosenName, data: chunks.join('') });
+          });
+        }
+      };
+      return { createWritable: function () { return Promise.resolve(writable); } };
+    });
+  };
+
+  window.showOpenFilePicker = function () {
+    return showLoadModal('').then(function (filename) {
+      return new Promise(function (resolve, reject) {
+        function onMsg(e) {
+          try {
+            var m = JSON.parse(e.data);
+            if (m.type === 'fileLoaded') {
+              ws.removeEventListener('message', onMsg);
+              var blob = new Blob([m.data], { type: 'application/json' });
+              var file = new File([blob], m.filename || filename, { type: 'application/json' });
+              resolve([{ getFile: function () { return Promise.resolve(file); } }]);
+            }
+            if (m.type === 'fileLoadError') {
+              ws.removeEventListener('message', onMsg);
+              reject(new Error(m.error));
+            }
+          } catch (_) {}
+        }
+        ws.addEventListener('message', onMsg);
+        wsSend({ cmd: 'loadFile', filename: filename });
+      });
+    });
+  };
+
+  // ── Detect port and auto-connect ─────────────────────────────────────────────
+  function populatePortSelect() {
+    fetch('/api/ports')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var ports = data.ports || [];
+        if (ports.length) {
+          detectedPortPath = ports[0];
+          setTimeout(function () {
+            var btn = document.getElementById('midi-connect');
+            if (btn) btn.click();
+          }, 400);
+        }
+      })
+      .catch(function () {});
+  }
+
+  function MockSerialPort(portPath) { this._path = portPath; }
+
+  MockSerialPort.prototype.open = function (opts) {
+    var baud = (opts && opts.baudRate) ? opts.baudRate : 115200;
+    var self = this;
+    return wsConnect().then(function () {
+      return new Promise(function (resolve, reject) {
+        function handler(e) {
+          try {
+            var msg = JSON.parse(e.data);
+            if (msg.type === 'opened')    { ws.removeEventListener('message', handler); resolve(); }
+            if (msg.type === 'openError') { ws.removeEventListener('message', handler); reject(new Error(msg.error)); }
+          } catch (_) {}
+        }
+        ws.addEventListener('message', handler);
+        wsSend({ cmd: 'open', path: self._path, baud: baud });
+      });
+    });
+  };
+
+  MockSerialPort.prototype.close = function () {
+    wsSend({ cmd: 'close' });
+    return Promise.resolve();
+  };
+
+  Object.defineProperty(MockSerialPort.prototype, 'readable', {
+    get: function () {
+      var listener;
+      return new ReadableStream({
+        start: function (controller) {
+          listener = function (bytes) { controller.enqueue(bytes); };
+          readListeners.push(listener);
+        },
+        cancel: function () {
+          var idx = readListeners.indexOf(listener);
+          if (idx >= 0) readListeners.splice(idx, 1);
+        }
+      });
+    }
+  });
+
+  Object.defineProperty(MockSerialPort.prototype, 'writable', {
+    get: function () {
+      return new WritableStream({
+        write: function (chunk) { wsSend({ cmd: 'write', bytes: Array.from(chunk) }); }
+      });
+    }
+  });
+
+  MockSerialPort.prototype.getInfo = function () {
+    return { usbVendorId: 0x2e8a, usbProductId: 0x000a };
+  };
+
+  Object.defineProperty(navigator, 'serial', {
+    value: {
+      getPorts: function () { return Promise.resolve([]); },
+      requestPort: function () {
+        if (!detectedPortPath) return Promise.reject(new DOMException('No port detected', 'NotFoundError'));
+        return Promise.resolve(new MockSerialPort(detectedPortPath));
+      }
+    },
+    configurable: true,
+    writable: true
+  });
+
+  function closeModal() {
+    var msg = { method: 'close_and_send', params: [''] };
+    try {
+      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.live) {
+        window.webkit.messageHandlers.live.postMessage(msg);
+      } else if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.postMessage(JSON.stringify(msg));
+      }
+    } catch (_) {}
+  }
+
+  function addCloseButton() {
+    var btn = document.createElement('button');
+    btn.id = '__close-btn';
+    btn.textContent = 'CLOSE';
+    btn.addEventListener('click', closeModal);
+    document.body.appendChild(btn);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      var modal = document.getElementById('__p8modal');
+      if (modal && modal.classList.contains('open')) {
+        modal.classList.remove('open');
+        if (_modalReject) _modalReject(new DOMException('', 'AbortError'));
+        _modalResolve = null;
+        _modalReject  = null;
+      } else {
+        closeModal();
+      }
+    }
+  });
+
+  wsConnect();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      populatePortSelect();
+      addCloseButton();
+      buildModal();
+    });
+  } else {
+    populatePortSelect();
+    addCloseButton();
+    buildModal();
+  }
+})();
+</script>

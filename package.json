@@ -1,12 +1,10 @@
 {
-  "name": "param8-editor",
-  "version": "1.0.0",
-  "description": "param8 MIDI Controller Editor — Device Mappings & Controller Config",
-  "main": "server.js",
+  "name": "param8-editor-workspace",
+  "private": true,
+  "workspaces": ["editor", "extension"],
   "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.21.0"
+    "editor": "npm start --workspace=editor",
+    "extension:build": "npm run build --workspace=extension",
+    "extension:dev": "npm run start --workspace=extension"
   }
 }
